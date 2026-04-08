@@ -35,7 +35,7 @@ import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
 import { useReports } from '../context/ReportsContext';
 import { useMessages } from '../context/MessagesContext';
-import { getTimeAgo, getMediaEmoji } from '../data/mockData';
+import { getTimeAgo, getMediaEmoji, getStoreEmoji } from '../data/mockData';
 
 type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores';
 
