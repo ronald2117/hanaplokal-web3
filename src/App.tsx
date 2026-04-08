@@ -22,11 +22,11 @@ import MessagingSheet from './components/MessagingSheet';
 import NotificationEngine from './components/NotificationEngine';
 
 function AppContent() {
-  const { activeTab, isLoggedIn, currentUser, openAuthModal } = useApp();
+  const { activeTab, isLoggedIn, isAdmin, currentUser, openAuthModal } = useApp();
 
   return (
     <StoresProvider isLoggedIn={isLoggedIn} currentUser={currentUser} onAuthRequired={openAuthModal}>
-      <PostsProvider isLoggedIn={isLoggedIn} currentUser={currentUser} onAuthRequired={openAuthModal}>
+      <PostsProvider isLoggedIn={isLoggedIn} isAdmin={isAdmin} currentUser={currentUser} onAuthRequired={openAuthModal}>
         <ReportsProvider isLoggedIn={isLoggedIn} currentUser={currentUser} onAuthRequired={openAuthModal}>
           <MessagesProvider isLoggedIn={isLoggedIn} currentUser={currentUser} onAuthRequired={openAuthModal}>
             <div className="min-h-screen bg-gray-50 max-w-lg mx-auto relative">

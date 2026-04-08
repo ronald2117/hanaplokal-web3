@@ -14,6 +14,9 @@ import {
   loadUserVouches,
   subscribeToComments,
   subscribeToPosts,
+  subscribeToDeletedPosts,
+  softDeletePost,
+  restorePost as restorePostRemote,
   toggleVouch as toggleVouchRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
@@ -42,6 +45,9 @@ interface PostsContextType {
     locationCoords?: { lat: number; lng: number };
   }) => void;
   deletePost: (postId: string) => void;
+  adminDeletePost: (post: import('../data/mockData').Post) => void;
+  deletedPosts: import('../data/mockData').Post[];
+  restorePost: (post: import('../data/mockData').Post) => void;
   toggleSavePost: (postId: string) => boolean;
   addAlert: (payload: Omit<PriceAlert, 'id' | 'userId' | 'active'>) => boolean;
   toggleAlertActive: (alertId: string) => void;
@@ -54,13 +60,15 @@ const PostsContext = createContext<PostsContextType | null>(null);
 interface PostsProviderProps {
   children: ReactNode;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   currentUser: User | null;
   onAuthRequired: () => void;
 }
 
-export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequired }: PostsProviderProps) {
+export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAuthRequired }: PostsProviderProps) {
   const [posts, setPosts] = useState<Post[]>(isFirebaseConfigured ? [] : mockPosts);
   const [comments, setComments] = useState<Comment[]>(isFirebaseConfigured ? [] : mockComments);
+  const [deletedPosts, setDeletedPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(isFirebaseConfigured);
   const [vouchedPosts, setVouchedPosts] = useState<Set<string>>(new Set());
   const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
@@ -115,12 +123,14 @@ export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequire
       setPostsLoading(false);
     });
     const unsubComments = subscribeToComments(setComments);
+    const unsubDeleted = isAdmin ? subscribeToDeletedPosts(setDeletedPosts) : null;
 
     return () => {
       if (unsubPosts) unsubPosts();
       if (unsubComments) unsubComments();
+      if (unsubDeleted) unsubDeleted();
     };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!isFirebaseConfigured || !currentUser) {
@@ -294,6 +304,36 @@ export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequire
     });
   }, []);
 
+  const adminDeletePost = useCallback((post: Post) => {
+    // Optimistic: remove from local state
+    setPosts(prev => prev.filter(p => p.id !== post.id));
+    setDeletedPosts(prev => [post, ...prev]);
+
+    if (isFirebaseConfigured && currentUser) {
+      softDeletePost(post, currentUser.uid, currentUser.displayName ?? 'Admin').catch(err => {
+        console.error('[HanapLokal] ❌ Failed to admin-delete post:', err);
+        // Rollback
+        setPosts(prev => [post, ...prev]);
+        setDeletedPosts(prev => prev.filter(p => p.id !== post.id));
+      });
+    }
+  }, [currentUser]);
+
+  const restorePost = useCallback((post: Post) => {
+    // Optimistic: move from deletedPosts back to posts
+    setDeletedPosts(prev => prev.filter(p => p.id !== post.id));
+    setPosts(prev => [post, ...prev]);
+
+    if (isFirebaseConfigured) {
+      restorePostRemote(post).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to restore post:', err);
+        // Rollback
+        setDeletedPosts(prev => [post, ...prev]);
+        setPosts(prev => prev.filter(p => p.id !== post.id));
+      });
+    }
+  }, []);
+
   const toggleSavePost = useCallback((postId: string): boolean => {
     if (!isLoggedIn) {
       onAuthRequired();
@@ -365,6 +405,9 @@ export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequire
         addComment,
         addPost,
         deletePost,
+        adminDeletePost,
+        deletedPosts,
+        restorePost,
         toggleSavePost,
         addAlert,
         toggleAlertActive,

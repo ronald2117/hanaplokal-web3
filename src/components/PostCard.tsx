@@ -1,4 +1,5 @@
-import { Clock, ThumbsUp, MessageCircle, Share2, AlertTriangle, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag } from 'lucide-react';
+import { useState } from 'react';
+import { Clock, ThumbsUp, MessageCircle, Share2, AlertTriangle, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji } from '../data/mockData';
@@ -8,8 +9,9 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { openPriceHistory, openStoreProfile, openUserProfile, openReportModal } = useApp();
-  const { toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet } = usePosts();
+  const { openPriceHistory, openStoreProfile, openUserProfile, openReportModal, isAdmin } = useApp();
+  const { toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet, adminDeletePost } = usePosts();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const age = getPostAge(post.timestamp);
   const isVouched = vouchedPosts.has(post.id);
   const isSaved = savedPostIds.has(post.id);
@@ -210,6 +212,34 @@ export default function PostCard({ post }: PostCardProps) {
         >
           <Flag className="w-4 h-4" />
         </button>
+
+        {/* Admin delete button */}
+        {isAdmin && (
+          confirmDelete ? (
+            <div className="flex items-center gap-1 ml-1">
+              <button
+                onClick={e => { e.stopPropagation(); adminDeletePost(post); setConfirmDelete(false); }}
+                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95"
+              >
+                Delete
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setConfirmDelete(false); }}
+                className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-50 transition-colors active:scale-95"
+              aria-label="Admin delete post"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )
+        )}
       </div>
     </div>
   );

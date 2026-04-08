@@ -27,6 +27,7 @@ import {
   Award,
   Users,
   Flame,
+  RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
@@ -36,7 +37,7 @@ import { useReports } from '../context/ReportsContext';
 import { useMessages } from '../context/MessagesContext';
 import { getTimeAgo, getMediaEmoji } from '../data/mockData';
 
-type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports';
+type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts';
 
 export default function ProfilePage() {
   const {
@@ -58,6 +59,8 @@ export default function ProfilePage() {
     comments,
     alerts,
     deletePost,
+    deletedPosts,
+    restorePost,
     vouchedPosts,
     savedPostIds,
     toggleVouch,
@@ -931,6 +934,82 @@ export default function ProfilePage() {
     );
   }
 
+  if (subView === 'adminDeletedPosts') {
+    return (
+      <div className="pb-24 min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 pt-14 pb-5 px-4 rounded-b-3xl">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSubView('adminReports')}
+                className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h2 className="text-white text-xl font-bold flex-1">Deleted Posts</h2>
+              <div className="bg-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-white text-sm font-bold">{deletedPosts.length}</span>
+                <span className="text-red-100 text-xs ml-1">deleted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-3">
+          {deletedPosts.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                <Trash2 className="w-7 h-7 text-gray-400" />
+              </div>
+              <h4 className="font-semibold text-gray-900">No deleted posts</h4>
+              <p className="text-sm text-gray-500 mt-1">Posts removed by admins will appear here.</p>
+            </div>
+          ) : (
+            deletedPosts.map(post => {
+              const emoji = getMediaEmoji(post.mediaUrl || post.category.toLowerCase());
+              return (
+                <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-xl flex-shrink-0">
+                        {emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{post.productName}</p>
+                        <p className="text-orange-500 font-black text-base">₱{post.price}<span className="text-xs text-gray-400 font-medium">/{post.unit}</span></p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-xs text-gray-500 truncate">{post.storeName}</span>
+                          <span className="text-[10px] text-gray-400">• by {post.userName}</span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-400">
+                          <Clock className="w-3 h-3" />
+                          <span>Posted {getTimeAgo(post.timestamp)}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 flex-shrink-0">
+                        Deleted
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-3">
+                    <button
+                      onClick={() => restorePost(post)}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Restore Post
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div className="h-4" />
+        </div>
+      </div>
+    );
+  }
+
   // Settings sub-view
   if (subView === 'settings') {
     return (
@@ -1270,17 +1349,30 @@ export default function ProfilePage() {
         </div>
 
         {isAdmin && (
-          <button
-            onClick={() => setSubView('adminReports')}
-            className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"
-          >
-            <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-              <ShieldCheck className="w-4.5 h-4.5 text-red-500" />
-            </div>
-            <span className="flex-1 font-medium text-gray-900 text-sm">Admin Reports</span>
-            <span className="text-xs text-red-500 font-bold">{openReports.length} open</span>
-            <ChevronRight className="w-4 h-4 text-gray-300" />
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={() => setSubView('adminReports')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-4.5 h-4.5 text-red-500" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Admin Reports</span>
+              <span className="text-xs text-red-500 font-bold">{openReports.length} open</span>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
+            <button
+              onClick={() => setSubView('adminDeletedPosts')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-4.5 h-4.5 text-red-500" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Deleted Posts</span>
+              <span className="text-xs text-red-500 font-bold">{deletedPosts.length}</span>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
+          </div>
         )}
 
         {/* Settings button */}

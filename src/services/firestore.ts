@@ -209,6 +209,46 @@ export async function createStore(store: Store): Promise<string> {
   return store.id;
 }
 
+export function subscribeToDeletedPosts(onData: (posts: Post[]) => void): Unsubscribe | null {
+  if (!db) return null;
+  const q = query(collection(db, 'deletedPosts'), orderBy('deletedAt', 'desc'), limit(200));
+  return onSnapshot(q, snapshot => {
+    onData(snapshot.docs.map(item => toPost(item.id, item.data())));
+  });
+}
+
+export async function softDeletePost(post: Post, adminId: string, adminName: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+
+  // Copy post to deletedPosts with metadata
+  batch.set(doc(db, 'deletedPosts', post.id), {
+    ...sanitize(post),
+    deletedAt: serverTimestamp(),
+    deletedBy: adminId,
+    deletedByName: adminName,
+  });
+
+  // Remove from posts collection
+  batch.delete(doc(db, 'posts', post.id));
+
+  await batch.commit();
+}
+
+export async function restorePost(post: Post): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+
+  // Restore to posts collection (without deletedAt metadata)
+  const { ...postData } = sanitize(post);
+  batch.set(doc(db, 'posts', post.id), postData);
+
+  // Remove from deletedPosts
+  batch.delete(doc(db, 'deletedPosts', post.id));
+
+  await batch.commit();
+}
+
 export async function createComment(comment: Omit<Comment, 'id'>): Promise<void> {
   if (!db) throw new Error('Firebase is not configured');
   await addDoc(collection(db, 'comments'), {
