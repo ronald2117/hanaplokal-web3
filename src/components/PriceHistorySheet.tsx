@@ -248,6 +248,7 @@ export default function PriceHistorySheet() {
           </div>
         )}
 
+        {/* 
         <button
           onClick={handleAlert}
           className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
@@ -255,6 +256,7 @@ export default function PriceHistorySheet() {
           <Bell className="w-5 h-5" />
           Set Price Alert
         </button>
+        */}
       </div>
     </div>
   );
