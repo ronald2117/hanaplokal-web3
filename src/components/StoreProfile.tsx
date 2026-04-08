@@ -1,4 +1,5 @@
-import { X, MapPin, Clock, Star, CheckCircle, ChevronRight, TrendingDown, TrendingUp, Minus, Tag, ThumbsUp, Flag } from 'lucide-react';
+import { useState } from 'react';
+import { X, MapPin, Clock, Star, CheckCircle, ChevronRight, TrendingDown, TrendingUp, Minus, Tag, ThumbsUp, Flag, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
@@ -6,10 +7,11 @@ import { useLocation } from '../context/LocationContext';
 import { getStoreTypeLabel, getStoreEmoji, getTimeAgo, getMediaEmoji } from '../data/mockData';
 
 export default function StoreProfile() {
-  const { showStoreProfile, closeStoreProfile, openPriceHistory, openReportModal } = useApp();
+  const { showStoreProfile, closeStoreProfile, openPriceHistory, openReportModal, isAdmin } = useApp();
   const { posts } = usePosts();
-  const { stores, toggleStoreVouch, vouchedStores } = useStores();
+  const { stores, toggleStoreVouch, vouchedStores, adminDeleteStore } = useStores();
   const { isWithinRadius } = useLocation();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!showStoreProfile) return null;
 
@@ -169,6 +171,38 @@ export default function StoreProfile() {
                 Report
               </button>
             </div>
+            {isAdmin && (
+              <div className="mt-2 text-center">
+                {confirmDelete ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        adminDeleteStore(store);
+                        setConfirmDelete(false);
+                        closeStoreProfile();
+                      }}
+                      className="flex-1 py-3 rounded-xl text-sm font-bold bg-red-500 text-white active:scale-95"
+                    >
+                      Delete Store
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-red-50 text-red-500 hover:bg-red-100 active:scale-[0.98] transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Store (Admin)
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Divider */}

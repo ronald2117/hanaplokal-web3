@@ -25,15 +25,16 @@ const ReportsContext = createContext<ReportsContextType | null>(null);
 interface ReportsProviderProps {
   children: ReactNode;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   currentUser: User | null;
   onAuthRequired: () => void;
 }
 
-export function ReportsProvider({ children, isLoggedIn, currentUser, onAuthRequired }: ReportsProviderProps) {
+export function ReportsProvider({ children, isLoggedIn, isAdmin, currentUser, onAuthRequired }: ReportsProviderProps) {
   const [reports, setReports] = useState<ModerationReport[]>([]);
 
   useEffect(() => {
-    if (isFirebaseConfigured) {
+    if (isFirebaseConfigured && isAdmin) {
       const unsub = subscribeToReports(setReports);
       return () => {
         if (unsub) unsub();
@@ -50,7 +51,7 @@ export function ReportsProvider({ children, isLoggedIn, currentUser, onAuthRequi
     }
 
     return undefined;
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isFirebaseConfigured) return;

@@ -209,6 +209,39 @@ export async function createStore(store: Store): Promise<string> {
   return store.id;
 }
 
+export function subscribeToDeletedStores(onData: (stores: import('../data/mockData').Store[]) => void): Unsubscribe | null {
+  if (!db) return null;
+  const q = query(collection(db, 'deletedStores'), orderBy('deletedAt', 'desc'), limit(200));
+  return onSnapshot(q, snapshot => {
+    onData(snapshot.docs.map(item => toStore(item.id, item.data())));
+  });
+}
+
+export async function softDeleteStore(store: import('../data/mockData').Store, adminId: string, adminName: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+
+  batch.set(doc(db, 'deletedStores', store.id), {
+    ...sanitize(store),
+    deletedAt: serverTimestamp(),
+    deletedBy: adminId,
+    deletedByName: adminName,
+  });
+
+  batch.delete(doc(db, 'stores', store.id));
+  await batch.commit();
+}
+
+export async function restoreStore(store: import('../data/mockData').Store): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+
+  const { ...storeData } = sanitize(store);
+  batch.set(doc(db, 'stores', store.id), storeData);
+  batch.delete(doc(db, 'deletedStores', store.id));
+  await batch.commit();
+}
+
 export function subscribeToDeletedPosts(onData: (posts: Post[]) => void): Unsubscribe | null {
   if (!db) return null;
   const q = query(collection(db, 'deletedPosts'), orderBy('deletedAt', 'desc'), limit(200));

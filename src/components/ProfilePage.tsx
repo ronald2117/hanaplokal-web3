@@ -37,7 +37,7 @@ import { useReports } from '../context/ReportsContext';
 import { useMessages } from '../context/MessagesContext';
 import { getTimeAgo, getMediaEmoji } from '../data/mockData';
 
-type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts';
+type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores';
 
 export default function ProfilePage() {
   const {
@@ -69,7 +69,7 @@ export default function ProfilePage() {
     toggleAlertActive,
     deleteAlert,
   } = usePosts();
-  const { stores } = useStores();
+  const { stores, deletedStores, restoreStore } = useStores();
   const { reports, updateReportStatus } = useReports();
   const { conversations } = useMessages();
 
@@ -1010,6 +1010,79 @@ export default function ProfilePage() {
     );
   }
 
+  if (subView === 'adminDeletedStores') {
+    return (
+      <div className="pb-24 min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 pt-14 pb-5 px-4 rounded-b-3xl">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSubView('adminReports')}
+                className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h2 className="text-white text-xl font-bold flex-1">Deleted Stores</h2>
+              <div className="bg-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-white text-sm font-bold">{deletedStores.length}</span>
+                <span className="text-red-100 text-xs ml-1">deleted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-3">
+          {deletedStores.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                <Trash2 className="w-7 h-7 text-gray-400" />
+              </div>
+              <h4 className="font-semibold text-gray-900">No deleted stores</h4>
+              <p className="text-sm text-gray-500 mt-1">Stores removed by admins will appear here.</p>
+            </div>
+          ) : (
+            deletedStores.map(store => {
+              return (
+                <div key={store.id} className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-xl flex-shrink-0">
+                        {getStoreEmoji(store.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{store.name}</p>
+                        <p className="text-sm text-gray-500">{store.address}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {store.type}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600 flex-shrink-0">
+                        Deleted
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-3">
+                    <button
+                      onClick={() => restoreStore(store)}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Restore Store
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div className="h-4" />
+        </div>
+      </div>
+    );
+  }
+
+
   // Settings sub-view
   if (subView === 'settings') {
     return (
@@ -1370,6 +1443,17 @@ export default function ProfilePage() {
               </div>
               <span className="flex-1 font-medium text-gray-900 text-sm">Deleted Posts</span>
               <span className="text-xs text-red-500 font-bold">{deletedPosts.length}</span>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
+            <button
+              onClick={() => setSubView('adminDeletedStores')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <Store className="w-4.5 h-4.5 text-red-500" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Deleted Stores</span>
+              <span className="text-xs text-red-500 font-bold">{deletedStores.length}</span>
               <ChevronRight className="w-4 h-4 text-gray-300" />
             </button>
           </div>

@@ -5,6 +5,9 @@ import {
   createStore,
   loadUserStoreVouches,
   subscribeToStores,
+  subscribeToDeletedStores,
+  softDeleteStore,
+  restoreStore as restoreStoreRemote,
   toggleStoreVouch as toggleStoreVouchRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
@@ -15,6 +18,9 @@ interface StoresContextType {
   getStore: (id: string) => Store | undefined;
   vouchedStores: Set<string>;
   toggleStoreVouch: (storeId: string) => boolean;
+  adminDeleteStore: (store: Store) => void;
+  restoreStore: (store: Store) => void;
+  deletedStores: Store[];
 }
 
 const StoresContext = createContext<StoresContextType | null>(null);
@@ -22,6 +28,7 @@ const StoresContext = createContext<StoresContextType | null>(null);
 interface StoresProviderProps {
   children: ReactNode;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   currentUser: User | null;
   onAuthRequired: () => void;
 }
@@ -31,17 +38,20 @@ function calculateTrustRating(store: Pick<Store, 'verified' | 'vouchCount'>): nu
   return Math.min(100, Math.max(45, Math.round(50 + store.vouchCount * 1.1 + verifiedBoost)));
 }
 
-export function StoresProvider({ children, isLoggedIn, currentUser, onAuthRequired }: StoresProviderProps) {
+export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onAuthRequired }: StoresProviderProps) {
   const [stores, setStores] = useState<Store[]>(isFirebaseConfigured ? [] : mockStores);
+  const [deletedStores, setDeletedStores] = useState<Store[]>([]);
   const [vouchedStores, setVouchedStores] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     const unsub = subscribeToStores(setStores);
+    const unsubDeleted = isAdmin ? subscribeToDeletedStores(setDeletedStores) : null;
     return () => {
       if (unsub) unsub();
+      if (unsubDeleted) unsubDeleted();
     };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!isFirebaseConfigured || !currentUser) {
@@ -127,12 +137,38 @@ export function StoresProvider({ children, isLoggedIn, currentUser, onAuthRequir
     return true;
   }, [currentUser, isLoggedIn, onAuthRequired, vouchedStores]);
 
+  const adminDeleteStore = useCallback((store: Store) => {
+    setStores(prev => prev.filter(s => s.id !== store.id));
+    setDeletedStores(prev => [store, ...prev]);
+
+    if (isFirebaseConfigured && currentUser) {
+      softDeleteStore(store, currentUser.uid, currentUser.displayName ?? 'Admin').catch(err => {
+        console.error('[HanapLokal] ❌ Failed to admin-delete store:', err);
+        setStores(prev => [store, ...prev]);
+        setDeletedStores(prev => prev.filter(s => s.id !== store.id));
+      });
+    }
+  }, [currentUser]);
+
+  const restoreStore = useCallback((store: Store) => {
+    setDeletedStores(prev => prev.filter(s => s.id !== store.id));
+    setStores(prev => [store, ...prev]);
+
+    if (isFirebaseConfigured) {
+      restoreStoreRemote(store).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to restore store:', err);
+        setDeletedStores(prev => [store, ...prev]);
+        setStores(prev => prev.filter(s => s.id !== store.id));
+      });
+    }
+  }, []);
+
   const getStore = useCallback((id: string): Store | undefined => {
     return stores.find(s => s.id === id);
   }, [stores]);
 
   return (
-    <StoresContext.Provider value={{ stores, addStore, getStore, vouchedStores, toggleStoreVouch }}>
+    <StoresContext.Provider value={{ stores, addStore, getStore, vouchedStores, toggleStoreVouch, adminDeleteStore, restoreStore, deletedStores }}>
       {children}
     </StoresContext.Provider>
   );
