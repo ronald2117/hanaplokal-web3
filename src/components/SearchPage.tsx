@@ -21,9 +21,10 @@ export default function SearchPage() {
 
   const productInsights = Object.values(
     nearbyPosts.reduce((acc, post) => {
-      const existing = acc[post.productName];
+      const groupKey = post.productName.trim().toLowerCase();
+      const existing = acc[groupKey];
       if (!existing) {
-        acc[post.productName] = {
+        acc[groupKey] = {
           productName: post.productName,
           unit: post.unit,
           category: post.category,

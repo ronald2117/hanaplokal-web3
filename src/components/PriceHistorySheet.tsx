@@ -21,8 +21,42 @@ export default function PriceHistorySheet() {
   const post = posts.find(p => p.id === showPriceHistory);
   if (!post) return null;
 
-  // insight is optional — real Firestore posts may not match mockMarketInsights
-  const insight = mockMarketInsights.find(m => m.productName === post.productName) ?? null;
+  // Compute dynamic insights from live posts with matching normalized names
+  const normalizedProductName = post.productName.trim().toLowerCase();
+  const relatedPosts = posts.filter(p => p.productName.trim().toLowerCase() === normalizedProductName);
+  
+  let insight = null;
+  if (relatedPosts.length > 0) {
+    const prices = relatedPosts.map(p => p.price);
+    const avgPrice = Number((prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2));
+    const lowestPrice = Math.min(...prices);
+    const highestPrice = Math.max(...prices);
+    const totalReports = prices.length;
+    
+    let trendDirection: 'up' | 'down' | 'stable' = 'stable';
+    if (avgPrice > lowestPrice * 1.08) trendDirection = 'up';
+    else if (avgPrice < highestPrice * 0.92) trendDirection = 'down';
+    
+    const trendPercent = Number((((highestPrice - lowestPrice) / Math.max(lowestPrice, 1)) * 100).toFixed(1));
+
+    // Simple mock historical curve + actual live prices appended
+    const mockInsight = mockMarketInsights.find(m => m.productName.trim().toLowerCase() === normalizedProductName);
+    let priceHistory = mockInsight ? [...mockInsight.priceHistory] : [];
+    prices.forEach(p => priceHistory.push(p));
+    // Pad to have enough points for sparkline
+    if (priceHistory.length < 5) priceHistory = [avgPrice, avgPrice, ...priceHistory];
+
+    insight = {
+      avgPrice,
+      lowestPrice,
+      highestPrice,
+      totalReports,
+      trendDirection,
+      trendPercent,
+      unit: post.unit,
+      priceHistory: priceHistory.slice(-15), // keep last 15 points max for the spark chart
+    };
+  }
 
   const isVouched = vouchedPosts.has(post.id);
   const isSaved = savedPostIds.has(post.id);
