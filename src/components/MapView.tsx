@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, CircleMarker, useMap } from 'react-leaflet';
 import { divIcon, type DivIcon } from 'leaflet';
 import { ChevronDown, Clock, Filter, MapPin, Navigation, Plus, ThumbsUp, X } from 'lucide-react';
@@ -51,10 +51,10 @@ export default function MapView() {
     return new Map(stores.map(store => [store.id, store]));
   }, [stores]);
 
-  const getPostCoords = (post: (typeof posts)[number]) => {
+  const getPostCoords = useCallback((post: (typeof posts)[number]) => {
     // Keep seeded and user posts aligned to their selected store whenever available.
     return storeById.get(post.storeId)?.locationCoords ?? post.locationCoords;
-  };
+  }, [storeById]);
 
   const filteredPosts = useMemo(() => {
     return posts.filter(post => {
@@ -73,7 +73,40 @@ export default function MapView() {
   const selectedPost = filteredPosts.find(p => p.id === selectedPin);
   const selectedStore = filteredStores.find(s => s.id === selectedPin);
   const isSelectedStoreVouched = selectedStore ? vouchedStores.has(selectedStore.id) : false;
-  const cheapestPost = filteredPosts.reduce((min, post) => (post.price < min.price ? post : min), filteredPosts[0]);
+  const cheapestPost = filteredPosts.reduce((min, post) => ((post.price < min.price) ? post : min), filteredPosts[0]);
+
+  // Compute posts with slight offset for overlapping items so they are all visible
+  const mapPosts = useMemo(() => {
+    const groups = new Map<string, typeof filteredPosts>();
+    filteredPosts.forEach(post => {
+      const c = getPostCoords(post);
+      const key = `${c.lat.toFixed(5)},${c.lng.toFixed(5)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(post);
+    });
+
+    const result: Array<{ post: (typeof filteredPosts)[0]; coords: { lat: number; lng: number } }> = [];
+    groups.forEach((groupPosts) => {
+      groupPosts.forEach((post, index) => {
+        const base = getPostCoords(post);
+        if (groupPosts.length === 1) {
+          result.push({ post, coords: base });
+        } else {
+          // Spread overlapped items 15-20 meters apart in a circle
+          const radius = 0.00015;
+          const angle = (index / groupPosts.length) * Math.PI * 2;
+          result.push({
+            post,
+            coords: {
+              lat: base.lat + radius * Math.cos(angle),
+              lng: base.lng + radius * Math.sin(angle),
+            },
+          });
+        }
+      });
+    });
+    return result;
+  }, [filteredPosts, getPostCoords]);
 
   return (
     <div className="h-screen flex flex-col pb-20">
@@ -81,7 +114,7 @@ export default function MapView() {
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-xl font-black text-gray-900">{mapMode === 'prices' ? 'Cheapest Near Me' : 'Nearby Stores'}</h2>
+              <h2 className="text-xl font-black text-gray-900">{mapMode === 'prices' ? 'Products Near Me' : 'Nearby Stores'}</h2>
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-orange-500" />
                 Within {radiusKm}km search radius
@@ -168,7 +201,7 @@ export default function MapView() {
           </CircleMarker>
 
           {mapMode === 'prices' &&
-            filteredPosts.map(post => {
+            mapPosts.map(({ post, coords }) => {
               const isCheapest = cheapestPost?.id === post.id;
               const variant = selectedPin === post.id ? 'selected' : isCheapest ? 'cheapest' : 'default';
 
@@ -176,7 +209,7 @@ export default function MapView() {
                 <Marker
                   key={post.id}
                   icon={iconForMarker(getMediaEmoji(post.mediaUrl), variant)}
-                  position={[getPostCoords(post).lat, getPostCoords(post).lng]}
+                  position={[coords.lat, coords.lng]}
                   eventHandlers={{
                     click: () => setSelectedPin(post.id),
                   }}
