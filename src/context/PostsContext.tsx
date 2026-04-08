@@ -22,6 +22,7 @@ interface PostsContextType {
   posts: Post[];
   comments: Comment[];
   alerts: PriceAlert[];
+  postsLoading: boolean;
   vouchedPosts: Set<string>;
   savedPostIds: Set<string>;
   commentSheetPostId: string | null;
@@ -60,6 +61,7 @@ interface PostsProviderProps {
 export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequired }: PostsProviderProps) {
   const [posts, setPosts] = useState<Post[]>(isFirebaseConfigured ? [] : mockPosts);
   const [comments, setComments] = useState<Comment[]>(isFirebaseConfigured ? [] : mockComments);
+  const [postsLoading, setPostsLoading] = useState(isFirebaseConfigured);
   const [vouchedPosts, setVouchedPosts] = useState<Set<string>>(new Set());
   const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
@@ -108,7 +110,10 @@ export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequire
   useEffect(() => {
     if (!isFirebaseConfigured) return;
 
-    const unsubPosts = subscribeToPosts(setPosts);
+    const unsubPosts = subscribeToPosts(data => {
+      setPosts(data);
+      setPostsLoading(false);
+    });
     const unsubComments = subscribeToComments(setComments);
 
     return () => {
@@ -350,6 +355,7 @@ export function PostsProvider({ children, isLoggedIn, currentUser, onAuthRequire
         posts,
         comments,
         alerts,
+        postsLoading,
         vouchedPosts,
         savedPostIds,
         commentSheetPostId,

@@ -4,10 +4,29 @@ import { usePosts } from '../context/PostsContext';
 import { useLocation } from '../context/LocationContext';
 import PostCard from './PostCard';
 
+function PostSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl p-4 mb-3 shadow-sm animate-pulse">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-gray-200" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 bg-gray-200 rounded-full w-1/3" />
+          <div className="h-2.5 bg-gray-100 rounded-full w-1/4" />
+        </div>
+      </div>
+      <div className="h-32 bg-gray-100 rounded-xl mb-3" />
+      <div className="space-y-2">
+        <div className="h-3 bg-gray-200 rounded-full w-2/3" />
+        <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+      </div>
+    </div>
+  );
+}
+
 export default function Feed() {
   const [showRadiusMenu, setShowRadiusMenu] = useState(false);
   const [customRadius, setCustomRadius] = useState('');
-  const { posts } = usePosts();
+  const { posts, postsLoading } = usePosts();
   const { isWithinRadius, radiusKm, setRadiusKm } = useLocation();
   const radiusMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -135,7 +154,13 @@ export default function Feed() {
 
       {/* Posts */}
       <div className="max-w-lg mx-auto px-3 pt-3">
-        {nearbyPosts.length === 0 ? (
+        {postsLoading ? (
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
+        ) : nearbyPosts.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-3">🔍</div>
             <p className="text-gray-500 font-medium">No nearby posts yet</p>
