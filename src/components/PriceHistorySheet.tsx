@@ -217,7 +217,7 @@ export default function PriceHistorySheet() {
         {/* Market insight section — only when mock data is available */}
         {insight ? (
           <>
-            <div className="grid grid-cols-3 gap-3 mb-5">
+            {/* <div className="grid grid-cols-3 gap-3 mb-5">
               <div className="bg-orange-50 rounded-2xl p-3 text-center">
                 <p className="text-[10px] font-medium text-orange-500 uppercase tracking-wider">Average</p>
                 <p className="text-xl font-black text-orange-600 mt-1">₱{insight.avgPrice}</p>
@@ -270,7 +270,7 @@ export default function PriceHistorySheet() {
                 <span className="text-xs font-bold text-emerald-600">₱{insight.lowestPrice}</span>
                 <span className="text-xs font-bold text-red-500">₱{insight.highestPrice}</span>
               </div>
-            </div>
+            </div> */}
           </>
         ) : (
           <div className="bg-gray-50 rounded-2xl p-5 mb-5 text-center">

@@ -335,16 +335,16 @@ export default function SearchPage() {
                           <span className="text-xl font-black text-orange-600">₱{insight.avgPrice}</span>
                           <span className="text-xs text-gray-400">/{insight.unit} avg</span>
                         </div>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trend.bg} ${trend.color}`}>
+                        {/* <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trend.bg} ${trend.color}`}>
                           <TrendIcon className="w-3 h-3" />
                           {trend.label} {insight.trendPercent}%
-                        </div>
+                        </div> */}
                       </div>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                      {/* <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                         <span>Low: <span className="font-bold text-emerald-600">₱{insight.lowestPrice}</span></span>
                         <span>High: <span className="font-bold text-red-500">₱{insight.highestPrice}</span></span>
                         <span>{insight.totalReports} reports</span>
-                      </div>
+                      </div> */}
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
                   </button>
@@ -401,7 +401,7 @@ export default function SearchPage() {
                       </div>
 
                       <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center gap-1 text-xs">
+                        {/* <div className="flex items-center gap-1 text-xs">
                           <span className="text-gray-400">{postCount} posts</span>
                         </div>
                         <span className="text-gray-200">|</span>
@@ -422,7 +422,7 @@ export default function SearchPage() {
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <Clock className="w-3 h-3" />
                           <span>{store.openHours.split('–')[0].trim()}</span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
