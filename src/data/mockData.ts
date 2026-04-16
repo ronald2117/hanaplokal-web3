@@ -627,8 +627,8 @@ export function getTimeAgo(timestamp: number): string {
 
 export function getPostAge(timestamp: number): 'fresh' | 'expiring' | 'expired' {
   const hours = (Date.now() - timestamp) / 3600000;
-  if (hours < 12) return 'fresh';
-  if (hours < 24) return 'expiring';
+  if (hours < 48) return 'fresh';
+  if (hours < 350) return 'expiring';
   return 'expired';
 }
 

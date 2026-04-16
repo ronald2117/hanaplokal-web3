@@ -123,7 +123,7 @@ export default function StoreProfile() {
           </div>
 
           {/* Stats bar */}
-          <div className="grid grid-cols-3 gap-3 px-5 pb-4">
+          {/* <div className="grid grid-cols-3 gap-3 px-5 pb-4">
             <div className="bg-orange-50 rounded-2xl p-3 text-center">
               <p className="text-[10px] font-medium text-orange-500 uppercase tracking-wider">Posts</p>
               <p className="text-xl font-black text-orange-600 mt-0.5">{storePosts.length}</p>
@@ -138,7 +138,7 @@ export default function StoreProfile() {
                 {lowestPost ? `₱${lowestPost.price}` : '—'}
               </p>
             </div>
-          </div>
+          </div> */}
 
           <div className="px-5 pb-4">
             <div className="grid grid-cols-2 gap-2">
