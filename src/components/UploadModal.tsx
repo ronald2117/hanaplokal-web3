@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { X, Camera, Video, ChevronRight, ChevronLeft, MapPin, FileText, Check, Search, Star, CheckCircle, Plus } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { X, Camera, Video, ChevronRight, ChevronLeft, MapPin, FileText, Check, Search, Star, CheckCircle, Plus, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
 import { useLocation } from '../context/LocationContext';
 import { categories, getStoreEmoji, getStoreTypeLabel } from '../data/mockData';
 import { searchPhilippineLocations, type PhilippineLocationResult } from '../services/locationSearch';
+import { uploadToCloudinary, isCloudinaryConfigured } from '../services/cloudinary';
 
 const uploadCategories = categories.filter(c => c !== 'All');
 
@@ -41,6 +42,13 @@ export default function UploadModal() {
   const [locationSearchLoading, setLocationSearchLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<PhilippineLocationResult | null>(null);
   const [locationError, setLocationError] = useState('');
+
+  // Media upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const totalSteps = 6;
 
@@ -103,7 +111,48 @@ export default function UploadModal() {
 
   const selectedStore = stores.find(s => s.id === selectedStoreId);
 
-  const handleSubmit = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setUploadError(`File too large. Max ${isVideo ? '50MB for videos' : '10MB for photos'}.`);
+      return;
+    }
+    setMediaFile(file);
+    setMediaType(isVideo ? 'video' : 'photo');
+    const reader = new FileReader();
+    reader.onloadend = () => setMediaPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be re-selected after removal
+    e.target.value = '';
+  };
+
+  const triggerFileSelect = (type: 'photo' | 'video') => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = type === 'photo' ? 'image/*' : 'video/*';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleSubmit = async () => {
+    let finalMediaUrl = mediaType ? (categoryMediaMap[category] || productName.toLowerCase().split(' ')[0]) : 'no_media';
+
+    if (mediaFile && isCloudinaryConfigured) {
+      setIsUploading(true);
+      try {
+        finalMediaUrl = await uploadToCloudinary(mediaFile);
+      } catch (err) {
+        console.error('[HanapLokal] Cloudinary upload failed:', err);
+        setUploadError('Upload failed — posting with a placeholder image instead.');
+        // Continue with fallback
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     const store = stores.find(s => s.id === selectedStoreId);
     const fallbackCoords = currentCoords ?? userLocation;
     const resolvedCoords = store?.locationCoords ?? selectedLocation ?? fallbackCoords;
@@ -115,7 +164,7 @@ export default function UploadModal() {
       category: finalCategory,
       price: parseFloat(price),
       unit,
-      mediaUrl: mediaType ? (categoryMediaMap[category] || productName.toLowerCase().split(' ')[0]) : 'no_media',
+      mediaUrl: finalMediaUrl,
       location: resolvedLocation,
       storeName: store?.name || selectedLocation?.name || 'Current Location',
       storeId: selectedStoreId || undefined,
@@ -148,6 +197,10 @@ export default function UploadModal() {
     setSelectedLocation(null);
     setLocationError('');
     setNote('');
+    setMediaFile(null);
+    setMediaPreview(null);
+    setUploadError(null);
+    setIsUploading(false);
   };
 
   const handleClose = () => {
@@ -227,51 +280,84 @@ export default function UploadModal() {
           {/* Step 1: Upload media */}
           {step === 1 && (
             <div>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
               <h4 className="text-lg font-bold text-gray-900 mb-1">Upload a Photo or Video (Optional)</h4>
-              <p className="text-sm text-gray-500 mb-5">Show the product or service for verification, or skip for now.</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setMediaType('photo')}
-                  className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all active:scale-95 ${
-                    mediaType === 'photo'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  <Camera className={`w-10 h-10 ${mediaType === 'photo' ? 'text-orange-500' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-semibold ${mediaType === 'photo' ? 'text-orange-600' : 'text-gray-500'}`}>Photo</span>
-                  {mediaType === 'photo' && (
-                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5 text-white" />
-                    </div>
+              <p className="text-sm text-gray-500 mb-4">Show the product or service for verification, or skip for now.</p>
+
+              {uploadError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs font-medium">{uploadError}</p>
+                </div>
+              )}
+
+              {mediaPreview ? (
+                <div className="relative rounded-2xl overflow-hidden bg-gray-100 border-2 border-orange-200 mb-4 group" style={{ aspectRatio: '16/9' }}>
+                  {mediaType === 'video' ? (
+                    <video src={mediaPreview} className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={mediaPreview} alt="Preview" className="w-full h-full object-cover" />
                   )}
-                </button>
-                <button
-                  onClick={() => setMediaType('video')}
-                  className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all active:scale-95 ${
-                    mediaType === 'video'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  <Video className={`w-10 h-10 ${mediaType === 'video' ? 'text-orange-500' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-semibold ${mediaType === 'video' ? 'text-orange-600' : 'text-gray-500'}`}>Video</span>
-                  {mediaType === 'video' && (
-                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5 text-white" />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => triggerFileSelect(mediaType ?? 'photo')}
+                      className="px-4 py-2 bg-white text-gray-900 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-orange-50 transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Change
+                    </button>
+                    <button
+                      onClick={() => { setMediaFile(null); setMediaPreview(null); setMediaType(null); }}
+                      className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-md text-white text-[10px] font-bold uppercase">
+                    {mediaType} • {(mediaFile!.size / (1024 * 1024)).toFixed(1)}MB
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => triggerFileSelect('photo')}
+                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 hover:bg-orange-50 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
+                      <Camera className="w-7 h-7 text-orange-500" />
                     </div>
-                  )}
+                    <span className="text-sm font-semibold text-gray-700">Photo</span>
+                    <p className="text-[10px] text-gray-400">JPG, PNG, WEBP · Max 10MB</p>
+                  </button>
+                  <button
+                    onClick={() => triggerFileSelect('video')}
+                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 hover:bg-orange-50 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
+                      <Video className="w-7 h-7 text-orange-500" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Video</span>
+                    <p className="text-[10px] text-gray-400">MP4, MOV · Max 50MB</p>
+                  </button>
+                </div>
+              )}
+
+              {!mediaPreview && (
+                <button
+                  onClick={() => { setMediaType(null); setStep(2); }}
+                  className="w-full mt-4 py-4 rounded-2xl text-sm font-bold bg-gray-900 text-white active:scale-[0.98] transition-all"
+                >
+                  Skip — Continue Without Media
                 </button>
-              </div>
-              <button
-                onClick={() => {
-                  setMediaType(null);
-                  setStep(2);
-                }}
-                className="w-full mt-4 py-4 rounded-2xl text-sm font-bold bg-gray-900 text-white active:scale-[0.98] transition-all"
-              >
-                Skip — Continue Without Media
-              </button>
+              )}
             </div>
           )}
 
@@ -662,14 +748,19 @@ export default function UploadModal() {
                 handleSubmit();
               }
             }}
-            disabled={!canProceed()}
+            disabled={!canProceed() || isUploading}
             className={`w-full py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-              canProceed()
+              canProceed() && !isUploading
                 ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            {step === totalSteps ? (
+            {isUploading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Uploading...
+              </>
+            ) : step === totalSteps ? (
               <>Post Price</>
             ) : (
               <>

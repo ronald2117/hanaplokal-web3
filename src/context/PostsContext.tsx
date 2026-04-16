@@ -270,7 +270,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       category: postData.category,
       price: postData.price,
       unit: postData.unit,
-      mediaUrl: gradient !== 'from-gray-100 via-gray-50 to-gray-100' ? mediaKey : postData.category.toLowerCase(),
+      mediaUrl: postData.mediaUrl.startsWith('http') ? postData.mediaUrl : (gradient !== 'from-gray-100 via-gray-50 to-gray-100' ? mediaKey : postData.category.toLowerCase()),
       location: postData.location ?? 'Tanauan, Batangas',
       storeName: postData.storeName ?? 'Current Location',
       storeId: postData.storeId ?? '',

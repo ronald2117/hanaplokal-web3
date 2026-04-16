@@ -32,7 +32,7 @@ export default function PostCard({ post }: PostCardProps) {
       navigator.share({
         title: `${post.productName} – ₱${post.price}/${post.unit}`,
         text: `Found ${post.productName} at ₱${post.price}/${post.unit} in ${post.storeName}. Check it on HanapLokal!`,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -80,9 +80,8 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-3 active:scale-[0.99] transition-all duration-200 cursor-pointer ${
-        age === 'expired' ? 'opacity-50' : ''
-      }`}
+      className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-3 active:scale-[0.99] transition-all duration-200 cursor-pointer ${age === 'expired' ? 'opacity-50' : ''
+        }`}
       onClick={() => openPriceHistory(post.id)}
     >
       {/* User header */}
@@ -122,9 +121,33 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Media section */}
       <div className="relative mx-3 rounded-xl overflow-hidden">
-        <div className={`aspect-[4/3] bg-gradient-to-br ${getMediaGradient(post.mediaUrl)} flex items-center justify-center`}>
-          <span className="text-7xl">{getMediaEmoji(post.mediaUrl)}</span>
-        </div>
+        {post.mediaUrl.startsWith('http') ? (
+          post.mediaUrl.match(/\.(mp4|mov|webm|ogg)(\?|$)/i) ? (
+            <div className="aspect-[4/3] bg-black">
+              <video
+                src={post.mediaUrl}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                loop
+                autoPlay
+              />
+            </div>
+          ) : (
+            <div className="aspect-[4/3] bg-gray-100">
+              <img
+                src={post.mediaUrl}
+                alt={post.productName}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )
+        ) : (
+          <div className={`aspect-[4/3] bg-gradient-to-br ${getMediaGradient(post.mediaUrl)} flex items-center justify-center`}>
+            <span className="text-7xl">{getMediaEmoji(post.mediaUrl)}</span>
+          </div>
+        )}
 
         {/* Price overlay */}
         <div className="absolute bottom-3 left-3">
@@ -169,17 +192,15 @@ export default function PostCard({ post }: PostCardProps) {
       <div className="flex items-center gap-1 px-4 py-3">
         <button
           onClick={handleVouch}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
-            isVouched
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all active:scale-95 ${isVouched
               ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
               : 'bg-orange-50 hover:bg-orange-100 text-orange-600'
-          }`}
+            }`}
         >
           <ThumbsUp className={`w-4 h-4 ${isVouched ? 'fill-current' : ''}`} />
           {isVouched ? 'Vouched' : 'Vouch'}
-          <span className={`px-1.5 py-0.5 rounded-md text-xs ${
-            isVouched ? 'bg-orange-400/50' : 'bg-orange-200/60'
-          }`}>
+          <span className={`px-1.5 py-0.5 rounded-md text-xs ${isVouched ? 'bg-orange-400/50' : 'bg-orange-200/60'
+            }`}>
             {post.vouchCount}
           </span>
         </button>
@@ -198,9 +219,8 @@ export default function PostCard({ post }: PostCardProps) {
         </button>
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors active:scale-95 ${
-            isSaved ? 'bg-amber-100 text-amber-700' : 'text-gray-500 hover:bg-gray-100'
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors active:scale-95 ${isSaved ? 'bg-amber-100 text-amber-700' : 'text-gray-500 hover:bg-gray-100'
+            }`}
           aria-label={isSaved ? 'Remove from saved products' : 'Save product'}
         >
           <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
