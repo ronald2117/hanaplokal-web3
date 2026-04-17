@@ -32,6 +32,7 @@ export default function UploadModal() {
   const [unit, setUnit] = useState('kg');
   const [category, setCategory] = useState('');
   const [customCategory, setCustomCategory] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
   const [productName, setProductName] = useState('');
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [storeSearch, setStoreSearch] = useState('');
@@ -192,6 +193,7 @@ export default function UploadModal() {
     setUnit('kg');
     setCategory('');
     setCustomCategory('');
+    setCategorySearch('');
     setProductName('');
     setSelectedStoreId('');
     setStoreSearch('');
@@ -406,9 +408,24 @@ export default function UploadModal() {
           {step === 3 && (
             <div>
               <h4 className="text-lg font-bold text-gray-900 mb-1">Select Category</h4>
-              <p className="text-sm text-gray-500 mb-5">What type of product or service is this?</p>
+              <p className="text-sm text-gray-500 mb-4">What type of product or service is this?</p>
+              
+              {/* Category Search */}
+              <div className="mb-4 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={categorySearch}
+                  onChange={e => setCategorySearch(e.target.value)}
+                  placeholder="Search categories..."
+                  className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+              
               <div className="grid grid-cols-2 gap-3">
-                {uploadCategories.map(cat => {
+                {uploadCategories
+                  .filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()))
+                  .map(cat => {
                   const emojis: Record<string, string> = {
                     Rice: '🍚',
                     Meat: '🥩',
@@ -426,7 +443,47 @@ export default function UploadModal() {
                     Household: '🧼',
                     Fuel: '⛽',
                     Pharmacy: '💊',
-                    'Local Services': '🔧',
+                    Clothing: '👗',
+                    Electronics: '📱',
+                    Hardware: '🔧',
+                    Haircut: '✂️',
+                    Barber: '💈',
+                    Salon: '💅',
+                    Massage: '💆',
+                    Spa: '🧖',
+                    Beauty: '💄',
+                    'Motorcycle Ride': '🏍️',
+                    'Tricycle Ride': '🛺',
+                    'Delivery Service': '🚚',
+                    Courier: '📦',
+                    Plumbing: '🚰',
+                    Electrical: '⚡',
+                    Carpentry: '🪛',
+                    Welding: '🔥',
+                    Painting: '🎨',
+                    'Cleaning Service': '🧹',
+                    'Car Wash': '🚗',
+                    'Car Repair': '🔩',
+                    'Motorcycle Repair': '🏍️',
+                    Restaurant: '🍽️',
+                    Catering: '🍴',
+                    'Food Delivery': '🍜',
+                    'Baking Service': '🎂',
+                    Tutoring: '📚',
+                    'Language Lessons': '🗣️',
+                    'Music Lessons': '🎵',
+                    'Art Lessons': '🎭',
+                    'Doctor Consultation': '⚕️',
+                    'Dental Service': '🦷',
+                    'Physical Therapy': '🏃',
+                    'Fitness Coaching': '💪',
+                    Photography: '📸',
+                    Videography: '🎥',
+                    'Event Catering': '🎉',
+                    'DJ Service': '🎧',
+                    'Pet Grooming': '🛁',
+                    'Pet Veterinary': '🐾',
+                    'Pet Training': '🐕',
                   };
                   return (
                     <button
@@ -445,17 +502,23 @@ export default function UploadModal() {
                     </button>
                   );
                 })}
-                <button
-                  onClick={() => setCategory('Other')}
-                  className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === 'Other'
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-100 bg-white hover:border-orange-200'
-                    }`}
-                >
-                  <span className="text-2xl">🧩</span>
-                  <p className={`font-semibold mt-1 ${category === 'Other' ? 'text-orange-600' : 'text-gray-700'}`}>Other</p>
-                </button>
+                {(!categorySearch || 'Other'.toLowerCase().includes(categorySearch.toLowerCase())) && (
+                  <button
+                    onClick={() => setCategory('Other')}
+                    className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === 'Other'
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-100 bg-white hover:border-orange-200'
+                      }`}
+                  >
+                    <span className="text-2xl">🧩</span>
+                    <p className={`font-semibold mt-1 ${category === 'Other' ? 'text-orange-600' : 'text-gray-700'}`}>Other</p>
+                  </button>
+                )}
               </div>
+              
+              {uploadCategories.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && categorySearch && !('Other'.toLowerCase().includes(categorySearch.toLowerCase())) && (
+                <p className="text-center text-gray-400 text-sm mt-4">No categories match your search</p>
+              )}
 
               {category === 'Other' && (
                 <div className="mt-4">

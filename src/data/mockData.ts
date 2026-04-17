@@ -576,6 +576,7 @@ export const mockMarketInsights: MarketInsight[] = [
 
 export const categories = [
   'All',
+  // Grocery & Food
   'Rice',
   'Meat',
   'Vegetables',
@@ -589,10 +590,60 @@ export const categories = [
   'Spices',
   'Snacks',
   'Bakery',
+  // Household & Retail
   'Household',
   'Fuel',
   'Pharmacy',
-  'Local Services',
+  'Clothing',
+  'Electronics',
+  'Hardware',
+  // Personal Services
+  'Haircut',
+  'Barber',
+  'Salon',
+  'Massage',
+  'Spa',
+  'Beauty',
+  // Transportation & Logistics
+  'Motorcycle Ride',
+  'Tricycle Ride',
+  'Delivery Service',
+  'Courier',
+  // Home & Handyman Services
+  'Plumbing',
+  'Electrical',
+  'Carpentry',
+  'Welding',
+  'Painting',
+  'Cleaning Service',
+  // Automotive
+  'Car Wash',
+  'Car Repair',
+  'Motorcycle Repair',
+  // Food Services
+  'Restaurant',
+  'Catering',
+  'Food Delivery',
+  'Baking Service',
+  // Education & Lessons
+  'Tutoring',
+  'Language Lessons',
+  'Music Lessons',
+  'Art Lessons',
+  // Health & Wellness
+  'Doctor Consultation',
+  'Dental Service',
+  'Physical Therapy',
+  'Fitness Coaching',
+  // Entertainment & Events
+  'Photography',
+  'Videography',
+  'Event Catering',
+  'DJ Service',
+  // Pet Services
+  'Pet Grooming',
+  'Pet Veterinary',
+  'Pet Training',
 ];
 
 export const mockComments: Comment[] = [
