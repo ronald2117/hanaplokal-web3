@@ -63,7 +63,7 @@ export default function Feed() {
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 pt-12 pb-5 px-4 rounded-b-3xl shadow-lg shadow-orange-200">
+      <div className="bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 pt-12 pb-5 px-4 rounded-b-3xl shadow-lg">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-1 relative">
             <div>
@@ -133,7 +133,7 @@ export default function Feed() {
           </div>
 
           {/* Quick insights */}
-          <div className="flex gap-2 mt-4">
+          {/* <div className="flex gap-2 mt-4">
             <div className="flex-1 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2.5">
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="w-4 h-4 text-emerald-300" />
@@ -148,7 +148,7 @@ export default function Feed() {
               </div>
               <p className="text-orange-100 text-[10px] mt-0.5">14 reports today</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

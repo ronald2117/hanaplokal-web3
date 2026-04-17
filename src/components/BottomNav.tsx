@@ -32,7 +32,7 @@ export default function BottomNav() {
                 onClick={handleUpload}
                 className="flex flex-col items-center justify-center -mt-5"
               >
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-200 active:scale-95 transition-transform">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center active:scale-95 transition-transform">
                   <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
                 </div>
               </button>
