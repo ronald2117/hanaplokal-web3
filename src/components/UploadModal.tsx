@@ -165,6 +165,7 @@ export default function UploadModal() {
       price: parseFloat(price),
       unit,
       mediaUrl: finalMediaUrl,
+      mediaType: mediaType ?? null,
       location: resolvedLocation,
       storeName: store?.name || selectedLocation?.name || 'Current Location',
       storeId: selectedStoreId || undefined,

@@ -27,6 +27,7 @@ export interface Post {
   price: number;
   unit: string;
   mediaUrl: string;
+  mediaType?: 'photo' | 'video' | null;
   location: string;
   storeName: string;
   storeId: string;

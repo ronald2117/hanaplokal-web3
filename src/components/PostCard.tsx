@@ -122,7 +122,7 @@ export default function PostCard({ post }: PostCardProps) {
       {/* Media section */}
       <div className="relative mx-3 rounded-xl overflow-hidden">
         {post.mediaUrl.startsWith('http') ? (
-          post.mediaUrl.match(/\.(mp4|mov|webm|ogg)(\?|$)/i) ? (
+          post.mediaType === 'video' || (post.mediaType === null && post.mediaUrl.match(/\.(mp4|mov|webm|ogg)(\?|$)/i)) ? (
             <div className="aspect-[4/3] bg-black">
               <video
                 src={post.mediaUrl}
