@@ -11,15 +11,67 @@ import { uploadToCloudinary, isCloudinaryConfigured } from '../services/cloudina
 const uploadCategories = categories.filter(c => c !== 'All');
 
 const categoryMediaMap: Record<string, string> = {
-  Rice: 'rice',
-  Meat: 'pork',
-  Vegetables: 'tomato',
-  Fish: 'fish',
-  Eggs: 'eggs',
-  'Local Services': 'services',
-  'Local Food': 'food',
-  'Ready to Eat': 'food',
+  Rice: 'rice', Meat: 'pork', Vegetables: 'tomato', Fish: 'fish', Eggs: 'eggs',
+  'Local Services': 'services', 'Local Food': 'food', 'Ready to Eat': 'food',
 };
+
+const SUPER_GROUPS = [
+  { id: 'grocery', label: 'Grocery & Food', emoji: '🛒', desc: 'Rice, Meat, Vegetables, Fish, Eggs & more' },
+  { id: 'household', label: 'Household & Retail', emoji: '🏬', desc: 'Household, Fuel, Pharmacy, Clothing & more' },
+  { id: 'services', label: 'Services', emoji: '🔧', desc: 'Personal, Transport, Home, Health & more' },
+];
+
+const SUB_CATS: Record<string, string[]> = {
+  grocery: ['Rice','Meat','Vegetables','Fish','Eggs','Fruits','Poultry','Seafood','Dairy','Beverages','Spices','Snacks','Bakery'],
+  household: ['Household','Fuel','Pharmacy','Clothing','Electronics','Hardware'],
+  services: ['Haircut','Barber','Salon','Massage','Spa','Beauty','Motorcycle Ride','Tricycle Ride','Delivery Service','Courier','Plumbing','Electrical','Carpentry','Welding','Painting','Cleaning Service','Car Wash','Car Repair','Motorcycle Repair','Restaurant','Catering','Food Delivery','Baking Service','Tutoring','Doctor Consultation','Dental Service','Physical Therapy','Fitness Coaching','Photography','Event Catering','DJ Service','Pet Grooming','Pet Veterinary','Pet Training'],
+};
+
+const CAT_EMOJI: Record<string, string> = {
+  Rice:'🍚', Meat:'🥩', Vegetables:'🥬', Fish:'🐟', Eggs:'🥚', Fruits:'🍎', Poultry:'🍗', Seafood:'🦐', Dairy:'🥛', Beverages:'🥤', Spices:'🌶️', Snacks:'🍪', Bakery:'🥖',
+  Household:'🧼', Fuel:'⛽', Pharmacy:'💊', Clothing:'👗', Electronics:'📱', Hardware:'🔧',
+  Haircut:'✂️', Barber:'💈', Salon:'💅', Massage:'💆', Spa:'🧖', Beauty:'💄', 'Motorcycle Ride':'🏍️', 'Tricycle Ride':'🛺', 'Delivery Service':'🚚', Courier:'📦', Plumbing:'🚰', Electrical:'⚡', Carpentry:'🪛', Welding:'🔥', Painting:'🎨', 'Cleaning Service':'🧹', 'Car Wash':'🚗', 'Car Repair':'🔩', 'Motorcycle Repair':'🏍️', Restaurant:'🍽️', Catering:'🍴', 'Food Delivery':'🍜', 'Baking Service':'🎂', Tutoring:'📚', 'Doctor Consultation':'⚕️', 'Dental Service':'🦷', 'Physical Therapy':'🏃', 'Fitness Coaching':'💪', Photography:'📸', 'Event Catering':'🎉', 'DJ Service':'🎧', 'Pet Grooming':'🛁', 'Pet Veterinary':'🐾', 'Pet Training':'🐕',
+};
+
+const UNIT_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  grocery: [{value:'kg',label:'per kg'},{value:'each',label:'each'},{value:'bundle',label:'bundle'},{value:'liter',label:'liter'},{value:'pack',label:'pack'}],
+  household: [{value:'each',label:'each'},{value:'bottle',label:'bottle'},{value:'pack',label:'pack'},{value:'set',label:'set'},{value:'liter',label:'liter'}],
+  services: [{value:'service',label:'per service'},{value:'hour',label:'per hour'},{value:'session',label:'per session'},{value:'trip',label:'per trip'},{value:'day',label:'per day'}],
+};
+
+const CAT_SUGGESTIONS: Record<string, string[]> = {
+  Rice: ['Well-milled Rice','Sinandomeng','NFA Rice','Brown Rice'],
+  Meat: ['Pork Belly','Pork Kasim','Chicken Breast','Beef Brisket','Liempo'],
+  Vegetables: ['Tomatoes','Onion','Garlic','Ampalaya','Kangkong'],
+  Fish: ['Tilapia','Bangus','Galunggong','Tuna','Maya-maya'],
+  Eggs: ['Eggs (Large)','Eggs (Medium)','Duck Eggs','Quail Eggs'],
+  Fruits: ['Banana','Mango','Papaya','Watermelon','Pineapple'],
+  Poultry: ['Chicken (Whole)','Chicken Thigh','Chicken Wings','Duck'],
+  Seafood: ['Shrimp','Squid','Crab','Tahong','Halaan'],
+  Dairy: ['Fresh Milk','Cheese','Butter','Yogurt'],
+  Beverages: ['Bottled Water','Softdrinks','Juice','Coffee'],
+  Snacks: ['Chips','Crackers','Nuts','Candy'],
+  Bakery: ['Pandesal','Tasty Bread','Cake','Ensaymada'],
+  Household: ['Detergent','Dishwashing Soap','Fabric Conditioner','Bleach','Toilet Paper'],
+  Fuel: ['Gasoline (Ron95)','Diesel','LPG Tank','Kerosene'],
+  Pharmacy: ['Paracetamol','Vitamins','Amoxicillin','Ibuprofen'],
+  Clothing: ['T-Shirt','Jeans','Dress','Sandals','School Uniform'],
+  Electronics: ['Phone Charger','Earphones','Extension Cord','LED Bulb'],
+  Hardware: ['Nails','Paint','Cement','PVC Pipe'],
+  Haircut: ['Basic Haircut','Kids Haircut','Fade Cut'],
+  Barber: ['Basic Cut','Shave','Hair & Beard Trim'],
+  Salon: ['Hair Rebond','Hair Color','Keratin Treatment','Manicure'],
+  Massage: ['Full Body Massage','Swedish Massage','Foot Massage'],
+  'Motorcycle Ride': ['Ride to Poblacion','Ride to Terminal','Barrio Route'],
+  'Tricycle Ride': ['Tricycle to Market','Terminal to Barrio'],
+  Restaurant: ['Silog Meal','Merienda Set','Barkada Meal'],
+  Plumbing: ['Pipe Repair','Drain Unclogging','Faucet Replacement'],
+  Electrical: ['Wiring Installation','Outlet Repair','Lighting Setup'],
+  Tutoring: ['Math Tutoring','Science Review','English Lesson'],
+  Photography: ['Event Coverage','Portrait Session','Product Photos'],
+};
+
+const superGroupOf = (cat: string) => Object.entries(SUB_CATS).find(([, v]) => v.includes(cat))?.[0] ?? 'grocery';
 
 export default function UploadModal() {
   const { showUploadModal, closeUploadModal, openCreateStore } = useApp();
@@ -33,6 +85,7 @@ export default function UploadModal() {
   const [category, setCategory] = useState('');
   const [customCategory, setCustomCategory] = useState('');
   const [categorySearch, setCategorySearch] = useState('');
+  const [superCategory, setSuperCategory] = useState('');
   const [productName, setProductName] = useState('');
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [storeSearch, setStoreSearch] = useState('');
@@ -102,6 +155,14 @@ export default function UploadModal() {
     return () => window.clearTimeout(timer);
   }, [locationQuery, selectedStoreId, showUploadModal]);
 
+  // Auto-reset unit when category changes
+  useEffect(() => {
+    if (!category) return;
+    const group = superGroupOf(category);
+    const defaults: Record<string, string> = { grocery: 'kg', household: 'each', services: 'service' };
+    setUnit(defaults[group] ?? 'kg');
+  }, [category]);
+
   const filteredStores = useMemo(
     () => stores.filter(s =>
       s.name.toLowerCase().includes(storeSearch.toLowerCase()) ||
@@ -118,26 +179,25 @@ export default function UploadModal() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError(null);
-    const isVideo = file.type.startsWith('video/');
-    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.type.startsWith('video/')) {
+      setUploadError('Video upload is currently disabled. Please upload a photo.');
+      return;
+    }
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setUploadError(`File too large. Max ${isVideo ? '50MB for videos' : '10MB for photos'}.`);
+      setUploadError('File too large. Max 10MB for photos.');
       return;
     }
     setMediaFile(file);
-    setMediaType(isVideo ? 'video' : 'photo');
+    setMediaType('photo');
     const reader = new FileReader();
     reader.onloadend = () => setMediaPreview(reader.result as string);
     reader.readAsDataURL(file);
-    // Reset input so the same file can be re-selected after removal
     e.target.value = '';
   };
 
-  const triggerFileSelect = (type: 'photo' | 'video') => {
-    if (fileInputRef.current) {
-      fileInputRef.current.accept = type === 'photo' ? 'image/*' : 'video/*';
-      fileInputRef.current.click();
-    }
+  const triggerFileSelect = (_type?: string) => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async () => {
@@ -194,6 +254,7 @@ export default function UploadModal() {
     setCategory('');
     setCustomCategory('');
     setCategorySearch('');
+    setSuperCategory('');
     setProductName('');
     setSelectedStoreId('');
     setStoreSearch('');
@@ -213,12 +274,16 @@ export default function UploadModal() {
     closeUploadModal();
   };
 
+  const activeGroup = category ? superGroupOf(category) : (superCategory || 'grocery');
+  const unitOpts = UNIT_OPTIONS[activeGroup] ?? UNIT_OPTIONS.grocery;
+  const suggestions = CAT_SUGGESTIONS[category] ?? [];
+
   const canProceed = () => {
     switch (step) {
-      case 1: return true;
+      case 1: return category !== '' && (category !== 'Other' || customCategory.trim().length >= 2);
       case 2: return price !== '' && parseFloat(price) > 0;
-      case 3: return category !== '' && (category !== 'Other' || customCategory.trim().length >= 2);
-      case 4: return productName.trim() !== '';
+      case 3: return productName.trim() !== '';
+      case 4: return true;
       case 5: return true;
       case 6: return true;
       default: return false;
@@ -282,86 +347,76 @@ export default function UploadModal() {
 
         {/* Step content */}
         <div className="p-5 overflow-y-auto" style={{ maxHeight: '55vh' }}>
-          {/* Step 1: Upload media */}
+          {/* Hidden file input – always rendered so refs work */}
+          <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" />
+
+          {/* Step 1: Category */}
           {step === 1 && (
             <div>
-              {/* Hidden file input */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileChange}
-              />
-
-              <h4 className="text-lg font-bold text-gray-900 mb-1">Upload a Photo or Video (Optional)</h4>
-              <p className="text-sm text-gray-500 mb-4">Show the product or service for verification, or skip for now.</p>
-
-              {uploadError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2 text-red-600">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs font-medium">{uploadError}</p>
-                </div>
-              )}
-
-              {mediaPreview ? (
-                <div className="relative rounded-2xl overflow-hidden bg-gray-100 border-2 border-orange-200 mb-4 group" style={{ aspectRatio: '16/9' }}>
-                  {mediaType === 'video' ? (
-                    <video src={mediaPreview} className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={mediaPreview} alt="Preview" className="w-full h-full object-cover" />
-                  )}
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <h4 className="text-lg font-bold text-gray-900 mb-1">Select Category</h4>
+              <p className="text-sm text-gray-500 mb-4">What type of product or service is this?</p>
+              {!superCategory ? (
+                <div className="flex flex-col gap-3">
+                  {SUPER_GROUPS.map(g => (
                     <button
-                      onClick={() => triggerFileSelect(mediaType ?? 'photo')}
-                      className="px-4 py-2 bg-white text-gray-900 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-orange-50 transition-colors"
+                      key={g.id}
+                      onClick={() => { setSuperCategory(g.id); setCategory(''); }}
+                      className="flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-[0.98] text-left"
                     >
-                      <Upload className="w-4 h-4" />
-                      Change
+                      <span className="text-4xl">{g.emoji}</span>
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-900">{g.label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{g.desc}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
                     </button>
-                    <button
-                      onClick={() => { setMediaFile(null); setMediaPreview(null); setMediaType(null); }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-md text-white text-[10px] font-bold uppercase">
-                    {mediaType} • {(mediaFile!.size / (1024 * 1024)).toFixed(1)}MB
-                  </div>
+                  ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div>
                   <button
-                    onClick={() => triggerFileSelect('photo')}
-                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 hover:bg-orange-50 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+                    onClick={() => { setSuperCategory(''); setCategory(''); }}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-orange-600 mb-4 active:opacity-70"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
-                      <Camera className="w-7 h-7 text-orange-500" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Photo</span>
-                    <p className="text-[10px] text-gray-400">JPG, PNG, WEBP · Max 10MB</p>
+                    <ChevronLeft className="w-4 h-4" />
+                    {SUPER_GROUPS.find(g => g.id === superCategory)?.label}
                   </button>
-                  <button
-                    onClick={() => triggerFileSelect('video')}
-                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 hover:bg-orange-50 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
-                      <Video className="w-7 h-7 text-orange-500" />
+                  <div className="grid grid-cols-2 gap-3">
+                    {SUB_CATS[superCategory].map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => { setCategory(cat); setCustomCategory(''); }}
+                        className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
+                          category === cat ? 'border-orange-500 bg-orange-50' : 'border-gray-100 bg-white hover:border-orange-200'
+                        }`}
+                      >
+                        <span className="text-2xl">{CAT_EMOJI[cat] || '📦'}</span>
+                        <p className={`font-semibold mt-1 text-sm ${category === cat ? 'text-orange-600' : 'text-gray-700'}`}>{cat}</p>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCategory('Other')}
+                      className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
+                        category === 'Other' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 bg-white hover:border-orange-200'
+                      }`}
+                    >
+                      <span className="text-2xl">🧩</span>
+                      <p className={`font-semibold mt-1 text-sm ${category === 'Other' ? 'text-orange-600' : 'text-gray-700'}`}>Other</p>
+                    </button>
+                  </div>
+                  {category === 'Other' && (
+                    <div className="mt-4">
+                      <label className="block text-xs font-semibold text-gray-500 mb-2">Custom Category</label>
+                      <input
+                        type="text"
+                        value={customCategory}
+                        onChange={e => setCustomCategory(e.target.value)}
+                        placeholder="e.g., Pet Supplies, Construction"
+                        className="w-full px-4 py-3 bg-gray-100 rounded-2xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      />
                     </div>
-                    <span className="text-sm font-semibold text-gray-700">Video</span>
-                    <p className="text-[10px] text-gray-400">MP4, MOV · Max 50MB</p>
-                  </button>
+                  )}
                 </div>
-              )}
-
-              {!mediaPreview && (
-                <button
-                  onClick={() => { setMediaType(null); setStep(2); }}
-                  className="w-full mt-4 py-4 rounded-2xl text-sm font-bold bg-gray-900 text-white active:scale-[0.98] transition-all"
-                >
-                  Skip — Continue Without Media
-                </button>
               )}
             </div>
           )}
@@ -370,7 +425,13 @@ export default function UploadModal() {
           {step === 2 && (
             <div>
               <h4 className="text-lg font-bold text-gray-900 mb-1">Enter the Price</h4>
-              <p className="text-sm text-gray-500 mb-5">What's the price you found?</p>
+              <p className="text-sm text-gray-500 mb-2">What's the price you found?</p>
+              {category && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">{CAT_EMOJI[category] || '📦'}</span>
+                  <span className="text-sm font-semibold text-orange-700 bg-orange-50 px-3 py-1 rounded-full">{category}</span>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <div className="flex-1 relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-orange-500">₱</span>
@@ -387,180 +448,86 @@ export default function UploadModal() {
                   onChange={e => setUnit(e.target.value)}
                   className="py-4 px-3 bg-gray-100 rounded-2xl text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300"
                 >
-                  <option value="kg">per kg</option>
-                  <option value="each">each</option>
-                  <option value="bundle">bundle</option>
-                  <option value="liter">liter</option>
-                  <option value="hour">per hour</option>
-                  <option value="day">per day</option>
-                  <option value="trip">per trip</option>
-                  <option value="service">per service</option>
-                  <option value="session">per session</option>
+                  {unitOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-              <p className="text-xs text-gray-400 mt-3">
-                Tip: Use units like per hour, per service, or per trip for local services.
-              </p>
             </div>
           )}
 
-          {/* Step 3: Category */}
+          {/* Step 3: Product Name */}
           {step === 3 && (
             <div>
-              <h4 className="text-lg font-bold text-gray-900 mb-1">Select Category</h4>
-              <p className="text-sm text-gray-500 mb-4">What type of product or service is this?</p>
-              
-              {/* Category Search */}
-              <div className="mb-4 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={e => setCategorySearch(e.target.value)}
-                  placeholder="Search categories..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                {uploadCategories
-                  .filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()))
-                  .map(cat => {
-                  const emojis: Record<string, string> = {
-                    Rice: '🍚',
-                    Meat: '🥩',
-                    Vegetables: '🥬',
-                    Fish: '🐟',
-                    Eggs: '🥚',
-                    Fruits: '🍎',
-                    Poultry: '🍗',
-                    Seafood: '🦐',
-                    Dairy: '🥛',
-                    Beverages: '🥤',
-                    Spices: '🌶️',
-                    Snacks: '🍪',
-                    Bakery: '🥖',
-                    Household: '🧼',
-                    Fuel: '⛽',
-                    Pharmacy: '💊',
-                    Clothing: '👗',
-                    Electronics: '📱',
-                    Hardware: '🔧',
-                    Haircut: '✂️',
-                    Barber: '💈',
-                    Salon: '💅',
-                    Massage: '💆',
-                    Spa: '🧖',
-                    Beauty: '💄',
-                    'Motorcycle Ride': '🏍️',
-                    'Tricycle Ride': '🛺',
-                    'Delivery Service': '🚚',
-                    Courier: '📦',
-                    Plumbing: '🚰',
-                    Electrical: '⚡',
-                    Carpentry: '🪛',
-                    Welding: '🔥',
-                    Painting: '🎨',
-                    'Cleaning Service': '🧹',
-                    'Car Wash': '🚗',
-                    'Car Repair': '🔩',
-                    'Motorcycle Repair': '🏍️',
-                    Restaurant: '🍽️',
-                    Catering: '🍴',
-                    'Food Delivery': '🍜',
-                    'Baking Service': '🎂',
-                    Tutoring: '📚',
-                    'Language Lessons': '🗣️',
-                    'Music Lessons': '🎵',
-                    'Art Lessons': '🎭',
-                    'Doctor Consultation': '⚕️',
-                    'Dental Service': '🦷',
-                    'Physical Therapy': '🏃',
-                    'Fitness Coaching': '💪',
-                    Photography: '📸',
-                    Videography: '🎥',
-                    'Event Catering': '🎉',
-                    'DJ Service': '🎧',
-                    'Pet Grooming': '🛁',
-                    'Pet Veterinary': '🐾',
-                    'Pet Training': '🐕',
-                  };
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => {
-                        setCategory(cat);
-                        if (cat !== 'Other') setCustomCategory('');
-                      }}
-                      className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === cat
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-100 bg-white hover:border-orange-200'
-                        }`}
-                    >
-                      <span className="text-2xl">{emojis[cat] || '📦'}</span>
-                      <p className={`font-semibold mt-1 ${category === cat ? 'text-orange-600' : 'text-gray-700'}`}>{cat}</p>
-                    </button>
-                  );
-                })}
-                {(!categorySearch || 'Other'.toLowerCase().includes(categorySearch.toLowerCase())) && (
-                  <button
-                    onClick={() => setCategory('Other')}
-                    className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === 'Other'
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-100 bg-white hover:border-orange-200'
-                      }`}
-                  >
-                    <span className="text-2xl">🧩</span>
-                    <p className={`font-semibold mt-1 ${category === 'Other' ? 'text-orange-600' : 'text-gray-700'}`}>Other</p>
-                  </button>
-                )}
-              </div>
-              
-              {uploadCategories.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && categorySearch && !('Other'.toLowerCase().includes(categorySearch.toLowerCase())) && (
-                <p className="text-center text-gray-400 text-sm mt-4">No categories match your search</p>
-              )}
-
-              {category === 'Other' && (
-                <div className="mt-4">
-                  <label className="block text-xs font-semibold text-gray-500 mb-2">Custom Category</label>
-                  <input
-                    type="text"
-                    value={customCategory}
-                    onChange={e => setCustomCategory(e.target.value)}
-                    placeholder="e.g., Pet Supplies, Construction"
-                    className="w-full px-4 py-3 bg-gray-100 rounded-2xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
+              <h4 className="text-lg font-bold text-gray-900 mb-1">Product / Service Name</h4>
+              <p className="text-sm text-gray-500 mb-2">What is it called?</p>
+              {category && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">{CAT_EMOJI[category] || '📦'}</span>
+                  <span className="text-sm font-semibold text-orange-700 bg-orange-50 px-3 py-1 rounded-full">{category}</span>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Step 4: Product Name */}
-          {step === 4 && (
-            <div>
-              <h4 className="text-lg font-bold text-gray-900 mb-1">Name</h4>
-              <p className="text-sm text-gray-500 mb-5">What is the product or service called?</p>
               <input
                 type="text"
                 value={productName}
                 onChange={e => setProductName(e.target.value)}
-                placeholder="e.g., Pork Belly, Motorcycle Ride"
+                placeholder={suggestions[0] ? `e.g., ${suggestions[0]}` : 'e.g., Pork Belly, Haircut'}
                 className="w-full px-4 py-4 bg-gray-100 rounded-2xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
-              <div className="mt-3">
-                <p className="text-xs text-gray-400 mb-2">Suggestions:</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Pork Belly', 'Well-milled Rice', 'Tilapia', 'Bangus', 'Chicken', 'Tomatoes', 'Onion', 'Haircut', 'Massage', 'Motorcycle Ride'].map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setProductName(s)}
-                      className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs text-gray-600 font-medium hover:bg-orange-50 hover:text-orange-600 transition-colors"
-                    >
-                      {s}
-                    </button>
-                  ))}
+              {suggestions.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs text-gray-400 mb-2">Suggestions for {category}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setProductName(s)}
+                        className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs text-gray-600 font-medium hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+          )}
+          {/* Step 4: Photo upload */}
+          {step === 4 && (
+            <div>
+              <h4 className="text-lg font-bold text-gray-900 mb-1">Add a Photo (Optional)</h4>
+              <p className="text-sm text-gray-500 mb-4">Show the product or price tag for community trust. You can skip this.</p>
+              {uploadError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs font-medium">{uploadError}</p>
+                </div>
+              )}
+              {mediaPreview ? (
+                <div className="relative rounded-2xl overflow-hidden bg-gray-100 border-2 border-orange-200 mb-4 group" style={{ aspectRatio: '4/3' }}>
+                  <img src={mediaPreview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button onClick={() => triggerFileSelect('photo')} className="px-4 py-2 bg-white text-gray-900 rounded-xl text-sm font-bold flex items-center gap-2">
+                      <Upload className="w-4 h-4" />Change
+                    </button>
+                    <button onClick={() => { setMediaFile(null); setMediaPreview(null); setMediaType(null); }} className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-bold">Remove</button>
+                  </div>
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-sm rounded-md text-white text-[10px] font-bold">
+                    {(mediaFile!.size / (1024 * 1024)).toFixed(1)}MB
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => triggerFileSelect('photo')}
+                  className="w-full aspect-video rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 hover:bg-orange-50 flex flex-col items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center">
+                    <Camera className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-700">Tap to upload a photo</p>
+                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WEBP · Max 10MB</p>
+                  </div>
+                </button>
+              )}
             </div>
           )}
 
