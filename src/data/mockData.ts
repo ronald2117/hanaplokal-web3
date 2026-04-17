@@ -716,6 +716,25 @@ export function getMediaEmoji(type: string): string {
   return emojis[type] || '📦';
 }
 
+export function getCategoryEmoji(category: string): string {
+  const emojis: Record<string, string> = {
+    Rice: '🍚', Meat: '🥩', Vegetables: '🥬', Fish: '🐟', Eggs: '🥚',
+    Fruits: '🍎', Poultry: '🍗', Seafood: '🦐', Dairy: '🥛', Beverages: '🥤',
+    Spices: '🌶️', Snacks: '🍪', Bakery: '🥖',
+    Household: '🧼', Fuel: '⛽', Pharmacy: '💊', Clothing: '👗', Electronics: '📱', Hardware: '🔧',
+    Haircut: '✂️', Barber: '💈', Salon: '💅', Massage: '💆', Spa: '🧖', Beauty: '💄',
+    'Motorcycle Ride': '🏍️', 'Tricycle Ride': '🛺', 'Delivery Service': '🚚', Courier: '📦',
+    Plumbing: '🚰', Electrical: '⚡', Carpentry: '🪛', Welding: '🔥', Painting: '🎨', 'Cleaning Service': '🧹',
+    'Car Wash': '🚗', 'Car Repair': '🔩', 'Motorcycle Repair': '🏍️',
+    Restaurant: '🍽️', Catering: '🍴', 'Food Delivery': '🍜', 'Baking Service': '🎂',
+    Tutoring: '📚', 'Doctor Consultation': '⚕️', 'Dental Service': '🦷', 'Physical Therapy': '🏃', 'Fitness Coaching': '💪',
+    Photography: '📸', 'Event Catering': '🎉', 'DJ Service': '🎧',
+    'Pet Grooming': '🛁', 'Pet Veterinary': '🐾', 'Pet Training': '🐕',
+    'Local Services': '🛠️',
+  };
+  return emojis[category] || '📦';
+}
+
 export function getStoreTypeLabel(type: Store['type']): string {
   const labels: Record<Store['type'], string> = {
     supermarket: 'Supermarket',

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Clock, ThumbsUp, MessageCircle, Share2, AlertTriangle, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
-import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji } from '../data/mockData';
+import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji, getCategoryEmoji } from '../data/mockData';
 
 interface PostCardProps {
   post: Post;
@@ -151,8 +151,9 @@ export default function PostCard({ post }: PostCardProps) {
             </div>
           )
         ) : (
-          <div className={`aspect-[4/3] bg-gradient-to-br ${getMediaGradient(post.mediaUrl)} flex items-center justify-center`}>
-            <span className="text-7xl">{getMediaEmoji(post.mediaUrl)}</span>
+          <div className={`aspect-[4/3] bg-gradient-to-br ${getMediaGradient(post.mediaUrl)} flex flex-col items-center justify-center gap-2`}>
+            <span className="text-7xl">{getCategoryEmoji(post.category) || getMediaEmoji(post.mediaUrl)}</span>
+            <span className="text-xs font-semibold text-gray-500/70 tracking-wide uppercase">{post.category}</span>
           </div>
         )}
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, CircleMarker, useMap } from 'react-leaflet';
 import { divIcon, type DivIcon } from 'leaflet';
 import { ChevronDown, Clock, Filter, MapPin, Navigation, Plus, ThumbsUp, X } from 'lucide-react';
-import { categories, getMediaEmoji, getStoreEmoji, getStoreTypeLabel, getTimeAgo } from '../data/mockData';
+import { categories, getCategoryEmoji, getMediaEmoji, getStoreEmoji, getStoreTypeLabel, getTimeAgo } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
@@ -208,7 +208,7 @@ export default function MapView() {
               return (
                 <Marker
                   key={post.id}
-                  icon={iconForMarker(getMediaEmoji(post.mediaUrl), variant)}
+                  icon={iconForMarker(getCategoryEmoji(post.category) || getMediaEmoji(post.mediaUrl), variant)}
                   position={[coords.lat, coords.lng]}
                   eventHandlers={{
                     click: () => setSelectedPin(post.id),
