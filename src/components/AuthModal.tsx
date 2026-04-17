@@ -66,7 +66,6 @@ export default function AuthModal() {
             { icon: Camera, text: 'Upload price photos & videos' },
             { icon: ShieldCheck, text: 'Vouch for accurate prices' },
             { icon: MessageCircle, text: 'Comment and discuss with community' },
-            { icon: Bell, text: 'Set price drop alerts' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3 text-sm text-gray-600">
               <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
@@ -144,7 +143,7 @@ export default function AuthModal() {
           {authBusy ? 'Please wait...' : 'Continue with Google'}
         </button>
 
-        <button
+        {/* <button
           disabled={authBusy}
           onClick={() => {
             void login('facebook');
@@ -152,7 +151,7 @@ export default function AuthModal() {
           className="w-full py-4 mt-3 bg-gray-900 text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] transition-transform text-base disabled:opacity-60 disabled:cursor-not-allowed"
         >
           Continue with Facebook
-        </button>
+        </button> */}
 
         <p className="text-center text-xs text-gray-400 mt-4">By continuing, you agree to our Terms of Service</p>
         {!isFirebaseConfigured && (
