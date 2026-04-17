@@ -282,6 +282,31 @@ export async function restorePost(post: Post): Promise<void> {
   await batch.commit();
 }
 
+export async function permanentlyDeletePost(postId: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+
+  // Gather comments for this post
+  const commentsQ = query(collection(db, 'comments'), where('postId', '==', postId));
+  const commentsSnap = await getDocs(commentsQ);
+
+  // Gather vouches for this post
+  const vouchesQ = query(collection(db, 'postVouches'), where('postId', '==', postId));
+  const vouchesSnap = await getDocs(vouchesQ);
+
+  // Firestore batches are limited to 500 ops — split if necessary
+  const allDeletes = [
+    doc(db, 'posts', postId),
+    ...commentsSnap.docs.map(d => d.ref),
+    ...vouchesSnap.docs.map(d => d.ref),
+  ];
+
+  for (let i = 0; i < allDeletes.length; i += 499) {
+    const batch = writeBatch(db);
+    allDeletes.slice(i, i + 499).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
 export async function createComment(comment: Omit<Comment, 'id'>): Promise<void> {
   if (!db) throw new Error('Firebase is not configured');
   await addDoc(collection(db, 'comments'), {

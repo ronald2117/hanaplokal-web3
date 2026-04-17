@@ -17,6 +17,8 @@ const categoryMediaMap: Record<string, string> = {
   Fish: 'fish',
   Eggs: 'eggs',
   'Local Services': 'services',
+  'Local Food': 'food',
+  'Ready to Eat': 'food',
 };
 
 export default function UploadModal() {
@@ -233,9 +235,9 @@ export default function UploadModal() {
             Your post for <span className="font-semibold text-gray-700">{productName}</span> at{' '}
             <span className="font-semibold text-orange-600">₱{price}/{unit}</span> is now live.
           </p>
-            <p className="text-gray-400 text-xs mt-1">
-              📍 {selectedStore?.name || selectedLocation?.name || (currentCoords ? 'Current location' : 'Tanauan, Batangas')}
-            </p>
+          <p className="text-gray-400 text-xs mt-1">
+            📍 {selectedStore?.name || selectedLocation?.name || (currentCoords ? 'Current location' : 'Tanauan, Batangas')}
+          </p>
           <p className="text-gray-400 text-xs mt-3">
             Thank you for helping the community find fair prices.
           </p>
@@ -405,39 +407,38 @@ export default function UploadModal() {
             <div>
               <h4 className="text-lg font-bold text-gray-900 mb-1">Select Category</h4>
               <p className="text-sm text-gray-500 mb-5">What type of product or service is this?</p>
-               <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {uploadCategories.map(cat => {
                   const emojis: Record<string, string> = {
-                     Rice: '🍚',
-                     Meat: '🥩',
-                     Vegetables: '🥬',
-                     Fish: '🐟',
-                     Eggs: '🥚',
-                     Fruits: '🍎',
-                     Poultry: '🍗',
-                     Seafood: '🦐',
-                     Dairy: '🥛',
-                     Beverages: '🥤',
-                     Spices: '🌶️',
-                     Snacks: '🍪',
-                     Bakery: '🥖',
-                     Household: '🧼',
-                     Fuel: '⛽',
-                     Pharmacy: '💊',
-                     'Local Services': '🔧',
+                    Rice: '🍚',
+                    Meat: '🥩',
+                    Vegetables: '🥬',
+                    Fish: '🐟',
+                    Eggs: '🥚',
+                    Fruits: '🍎',
+                    Poultry: '🍗',
+                    Seafood: '🦐',
+                    Dairy: '🥛',
+                    Beverages: '🥤',
+                    Spices: '🌶️',
+                    Snacks: '🍪',
+                    Bakery: '🥖',
+                    Household: '🧼',
+                    Fuel: '⛽',
+                    Pharmacy: '💊',
+                    'Local Services': '🔧',
                   };
                   return (
                     <button
                       key={cat}
-                       onClick={() => {
-                         setCategory(cat);
-                         if (cat !== 'Other') setCustomCategory('');
-                       }}
-                      className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
-                        category === cat
+                      onClick={() => {
+                        setCategory(cat);
+                        if (cat !== 'Other') setCustomCategory('');
+                      }}
+                      className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === cat
                           ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-100 bg-white hover:border-orange-200'
-                      }`}
+                        }`}
                     >
                       <span className="text-2xl">{emojis[cat] || '📦'}</span>
                       <p className={`font-semibold mt-1 ${category === cat ? 'text-orange-600' : 'text-gray-700'}`}>{cat}</p>
@@ -446,29 +447,28 @@ export default function UploadModal() {
                 })}
                 <button
                   onClick={() => setCategory('Other')}
-                  className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
-                    category === 'Other'
+                  className={`py-4 px-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${category === 'Other'
                       ? 'border-orange-500 bg-orange-50'
                       : 'border-gray-100 bg-white hover:border-orange-200'
-                  }`}
+                    }`}
                 >
                   <span className="text-2xl">🧩</span>
                   <p className={`font-semibold mt-1 ${category === 'Other' ? 'text-orange-600' : 'text-gray-700'}`}>Other</p>
                 </button>
               </div>
 
-               {category === 'Other' && (
-                 <div className="mt-4">
-                   <label className="block text-xs font-semibold text-gray-500 mb-2">Custom Category</label>
-                   <input
-                     type="text"
-                     value={customCategory}
-                     onChange={e => setCustomCategory(e.target.value)}
-                     placeholder="e.g., Pet Supplies, Construction"
-                     className="w-full px-4 py-3 bg-gray-100 rounded-2xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                   />
-                 </div>
-               )}
+              {category === 'Other' && (
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-gray-500 mb-2">Custom Category</label>
+                  <input
+                    type="text"
+                    value={customCategory}
+                    onChange={e => setCustomCategory(e.target.value)}
+                    placeholder="e.g., Pet Supplies, Construction"
+                    className="w-full px-4 py-3 bg-gray-100 rounded-2xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -508,25 +508,24 @@ export default function UploadModal() {
               <p className="text-sm text-gray-500 mb-4">If selected, your post uses that store location. If not, we'll use your current location.</p>
 
               <button
-                  onClick={() => {
-                    setSelectedStoreId('');
-                    setSelectedLocation(
-                      currentCoords
-                        ? {
-                            id: 'current-location',
-                            name: 'Current location',
-                            address: 'Current location',
-                            lat: currentCoords.lat,
-                            lng: currentCoords.lng,
-                          }
-                        : null
-                    );
-                  }}
-                className={`w-full flex items-center gap-3 p-3 mb-3 rounded-2xl text-left transition-all active:scale-[0.98] ${
-                  selectedStoreId === ''
+                onClick={() => {
+                  setSelectedStoreId('');
+                  setSelectedLocation(
+                    currentCoords
+                      ? {
+                        id: 'current-location',
+                        name: 'Current location',
+                        address: 'Current location',
+                        lat: currentCoords.lat,
+                        lng: currentCoords.lng,
+                      }
+                      : null
+                  );
+                }}
+                className={`w-full flex items-center gap-3 p-3 mb-3 rounded-2xl text-left transition-all active:scale-[0.98] ${selectedStoreId === ''
                     ? 'bg-blue-50 ring-2 ring-blue-400'
                     : 'bg-gray-50 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedStoreId === '' ? 'bg-blue-100' : 'bg-white'}`}>
                   <MapPin className={`w-5 h-5 ${selectedStoreId === '' ? 'text-blue-600' : 'text-gray-400'}`} />
@@ -622,15 +621,13 @@ export default function UploadModal() {
                     <button
                       key={store.id}
                       onClick={() => setSelectedStoreId(store.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.98] ${
-                        isSelected
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.98] ${isSelected
                           ? 'bg-orange-50 ring-2 ring-orange-400'
                           : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
-                        isSelected ? 'bg-orange-100' : 'bg-white'
-                      }`}>
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${isSelected ? 'bg-orange-100' : 'bg-white'
+                        }`}>
                         {getStoreEmoji(store.type)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -750,11 +747,10 @@ export default function UploadModal() {
               }
             }}
             disabled={!canProceed() || isUploading}
-            className={`w-full py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-              canProceed() && !isUploading
+            className={`w-full py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${canProceed() && !isUploading
                 ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+              }`}
           >
             {isUploading ? (
               <>

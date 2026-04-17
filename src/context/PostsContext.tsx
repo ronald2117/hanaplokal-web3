@@ -18,6 +18,7 @@ import {
   softDeletePost,
   restorePost as restorePostRemote,
   toggleVouch as toggleVouchRemote,
+  permanentlyDeletePost,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
 
@@ -45,6 +46,7 @@ interface PostsContextType {
     locationCoords?: { lat: number; lng: number };
   }) => void;
   deletePost: (postId: string) => void;
+  userDeletePost: (post: import('../data/mockData').Post) => void;
   adminDeletePost: (post: import('../data/mockData').Post) => void;
   deletedPosts: import('../data/mockData').Post[];
   restorePost: (post: import('../data/mockData').Post) => void;
@@ -304,6 +306,25 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     });
   }, []);
 
+  const userDeletePost = useCallback((post: Post) => {
+    // Guard: only the post's owner may call this
+    if (!isLoggedIn || !currentUser || currentUser.uid !== post.userId) return;
+
+    // Optimistic removal
+    setPosts(prev => prev.filter(p => p.id !== post.id));
+    setComments(prev => prev.filter(c => c.postId !== post.id));
+    setVouchedPosts(prev => { const next = new Set(prev); next.delete(post.id); return next; });
+    setSavedPostIds(prev => { const next = new Set(prev); next.delete(post.id); return next; });
+
+    if (isFirebaseConfigured) {
+      permanentlyDeletePost(post.id).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to permanently delete post:', err);
+        // Roll back
+        setPosts(prev => [post, ...prev]);
+      });
+    }
+  }, [currentUser, isLoggedIn]);
+
   const adminDeletePost = useCallback((post: Post) => {
     // Optimistic: remove from local state
     setPosts(prev => prev.filter(p => p.id !== post.id));
@@ -405,6 +426,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         addComment,
         addPost,
         deletePost,
+        userDeletePost,
         adminDeletePost,
         deletedPosts,
         restorePost,
