@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Admin check: look up the caller's UID in the `admins` collection.
+    // Populate this collection once from the Firebase console or the seeding
+    // script in src/scripts/seedAdmins.ts.
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ── Posts ───────────────────────────────────────────────────────────────
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); // vouch / commentCount increments
+      allow delete: if isAdmin();    // admins only (soft-delete handled by app)
+    }
+
+    // ── Deleted posts (admin archive) ────────────────────────────────────
+    match /deletedPosts/{postId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Comments ─────────────────────────────────────────────────────────
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      // Owner can delete their own comment; admins can delete any comment.
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+      // No arbitrary edits allowed.
+      allow update: if false;
+    }
+
+    // ── Stores ───────────────────────────────────────────────────────────
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    match /deletedStores/{storeId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Vouches ──────────────────────────────────────────────────────────
+    match /postVouches/{vouchId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /storeVouches/{vouchId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // ── Reports ──────────────────────────────────────────────────────────
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Messages ─────────────────────────────────────────────────────────
+    match /messages/{msgId} {
+      allow read: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds;
+      allow delete: if false;
+    }
+
+    // ── Admins registry ──────────────────────────────────────────────────
+    // Only admins can read/write this collection (bootstrapped manually).
+    match /admins/{uid} {
+      allow read: if isSignedIn();   // rules need to read this; clients can too
+      allow write: if isAdmin();     // only existing admins can add/remove
+    }
+  }
+}

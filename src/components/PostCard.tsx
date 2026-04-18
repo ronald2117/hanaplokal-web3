@@ -17,6 +17,9 @@ export default function PostCard({ post }: PostCardProps) {
   const age = getPostAge(post.timestamp);
   const isVouched = vouchedPosts.has(post.id);
   const isSaved = savedPostIds.has(post.id);
+  // When no store was selected, storeName is 'Current Location' — show the
+  // real geocoded address stored in post.location instead.
+  const displayStoreName = post.storeName === 'Current Location' ? post.location : post.storeName;
 
   const handleVouch = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -169,10 +172,10 @@ export default function PostCard({ post }: PostCardProps) {
         <div className="absolute top-3 right-3">
           <button
             onClick={handleStoreTap}
-            className="bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-medium px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-white hover:shadow-md transition-all active:scale-95"
+            className="bg-white/90 backdrop-blur-sm text-gray-800 dark:text-gray-900 text-[10px] font-medium px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm hover:bg-white hover:shadow-md transition-all active:scale-95"
           >
             <Store className="w-3 h-3 text-orange-500" />
-            {post.storeName}
+            {displayStoreName}
           </button>
         </div>
       </div>
@@ -191,7 +194,7 @@ export default function PostCard({ post }: PostCardProps) {
             className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors active:scale-95"
           >
             <MapPin className="w-3 h-3" />
-            {post.storeName}
+            {displayStoreName}
           </button>
         </div>
       </div>

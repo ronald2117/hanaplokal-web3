@@ -9,7 +9,7 @@ import type { Comment } from '../data/mockData';
 
 export default function CommentSheet() {
   const { commentSheetPostId, closeCommentSheet, getCommentsForPost, addComment, deleteComment, posts } = usePosts();
-  const { isLoggedIn, requireAuth, openUserProfile, currentUser } = useApp();
+  const { isLoggedIn, requireAuth, openUserProfile, currentUser, isAdmin } = useApp();
   const [newComment, setNewComment] = useState('');
   const [sending, setSending] = useState(false);
   const [liveComments, setLiveComments] = useState<Comment[] | null>(null);
@@ -166,10 +166,14 @@ export default function CommentSheet() {
                         {isCurrentUser ? 'You' : comment.userName}
                       </button>
                       <span className="text-[10px] text-gray-400">{getTimeAgo(comment.timestamp)}</span>
-                      {isCurrentUser && (
+                      {(isCurrentUser || isAdmin) && (
                         <button
                           onClick={() => setConfirmDeleteId(isPendingDelete ? null : comment.id)}
-                          className="w-5 h-5 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all"
+                          className={`w-5 h-5 flex items-center justify-center rounded-full transition-all ${
+                            isAdmin && !isCurrentUser
+                              ? 'text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30'
+                              : 'text-gray-300 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
+                          }`}
                           aria-label="Delete comment"
                         >
                           <Trash2 className="w-3 h-3" />
