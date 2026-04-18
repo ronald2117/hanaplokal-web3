@@ -365,7 +365,7 @@ export default function MapView() {
               onClick={() => openPriceHistory(selectedPost.id)}
               className="w-full mt-3 py-2.5 bg-orange-50 text-orange-600 font-semibold rounded-xl text-sm flex items-center justify-center gap-1"
             >
-              View Price History
+              View Product Profile
               <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
             </button>
           </div>
