@@ -3,17 +3,37 @@ import { X, Send, MessageCircle } from 'lucide-react';
 import { usePosts } from '../context/PostsContext';
 import { useApp } from '../context/AppContext';
 import { getTimeAgo } from '../data/mockData';
+import { subscribeToPostComments } from '../services/firestore';
+import { isFirebaseConfigured } from '../lib/firebase';
+import type { Comment } from '../data/mockData';
 
 export default function CommentSheet() {
   const { commentSheetPostId, closeCommentSheet, getCommentsForPost, addComment, posts } = usePosts();
-  const { isLoggedIn, requireAuth, openUserProfile } = useApp();
+  const { isLoggedIn, requireAuth, openUserProfile, currentUser } = useApp();
   const [newComment, setNewComment] = useState('');
   const [sending, setSending] = useState(false);
+  const [liveComments, setLiveComments] = useState<Comment[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const post = posts.find(p => p.id === commentSheetPostId);
-  const comments = commentSheetPostId ? getCommentsForPost(commentSheetPostId) : [];
+  // Use live per-post subscription when Firebase is configured, fall back to context cache
+  const comments = isFirebaseConfigured
+    ? (liveComments ?? [])
+    : (commentSheetPostId ? getCommentsForPost(commentSheetPostId) : []);
+
+  // Subscribe to this post's comments directly when the sheet opens
+  useEffect(() => {
+    if (!commentSheetPostId || !isFirebaseConfigured) {
+      setLiveComments(null);
+      return;
+    }
+    setLiveComments(null); // reset while loading
+    const unsub = subscribeToPostComments(commentSheetPostId, (data) => {
+      setLiveComments(data);
+    });
+    return () => { if (unsub) unsub(); };
+  }, [commentSheetPostId]);
 
   // Scroll to bottom when comments change
   useEffect(() => {
@@ -103,7 +123,12 @@ export default function CommentSheet() {
 
         {/* Comments list */}
         <div ref={listRef} className="flex-1 overflow-y-auto px-5 py-3 space-y-4 min-h-0">
-          {comments.length === 0 ? (
+          {isFirebaseConfigured && liveComments === null ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-2 border-orange-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-gray-400 text-sm">Loading comments…</p>
+            </div>
+          ) : comments.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-3">💬</div>
               <p className="text-gray-500 font-medium">No comments yet</p>
@@ -111,7 +136,9 @@ export default function CommentSheet() {
             </div>
           ) : (
             comments.map((comment) => {
-              const isCurrentUser = comment.userId === 'current_user';
+              const isCurrentUser = currentUser
+                ? comment.userId === currentUser.uid
+                : comment.userId === 'current_user';
               return (
                 <div key={comment.id} className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
                   <div

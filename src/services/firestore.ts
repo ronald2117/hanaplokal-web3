@@ -184,9 +184,39 @@ export function subscribeToStores(onData: (stores: Store[]) => void): Unsubscrib
 export function subscribeToComments(onData: (comments: Comment[]) => void): Unsubscribe | null {
   if (!db) return null;
   const q = query(collection(db, 'comments'), orderBy('timestamp', 'asc'), limit(400));
-  return onSnapshot(q, snapshot => {
-    onData(snapshot.docs.map(item => toComment(item.id, item.data())));
-  });
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toComment(item.id, item.data())));
+    },
+    err => {
+      console.error('[HanapLokal] ❌ subscribeToComments failed:', err.message);
+      // Fallback: signal empty so the UI shows "No comments" instead of hanging
+      onData([]);
+    }
+  );
+}
+
+export function subscribeToPostComments(
+  postId: string,
+  onData: (comments: Comment[]) => void
+): Unsubscribe | null {
+  if (!db || !postId) return null;
+  const q = query(
+    collection(db, 'comments'),
+    where('postId', '==', postId),
+    orderBy('timestamp', 'asc')
+  );
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toComment(item.id, item.data())));
+    },
+    err => {
+      console.error('[HanapLokal] ❌ subscribeToPostComments failed:', err.message);
+      onData([]);
+    }
+  );
 }
 
 export async function createPost(post: Omit<Post, 'id'>): Promise<void> {
