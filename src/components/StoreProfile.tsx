@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, Clock, Star, CheckCircle, ChevronRight, TrendingDown, TrendingUp, Minus, Tag, ThumbsUp, Flag, Trash2 } from 'lucide-react';
+import { X, MapPin, Clock, Star, CheckCircle, ChevronRight, TrendingDown, TrendingUp, Minus, Tag, ThumbsUp, Flag, Trash2, Map, ExternalLink } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
@@ -7,7 +7,7 @@ import { useLocation } from '../context/LocationContext';
 import { getStoreTypeLabel, getStoreEmoji, getTimeAgo, getMediaEmoji } from '../data/mockData';
 
 export default function StoreProfile() {
-  const { showStoreProfile, closeStoreProfile, openPriceHistory, openReportModal, isAdmin } = useApp();
+  const { showStoreProfile, closeStoreProfile, openPriceHistory, openReportModal, isAdmin, focusOnMap } = useApp();
   const { posts } = usePosts();
   const { stores, toggleStoreVouch, vouchedStores, adminDeleteStore } = useStores();
   const { isWithinRadius } = useLocation();
@@ -170,6 +170,29 @@ export default function StoreProfile() {
                 <Flag className="w-4 h-4" />
                 Report
               </button>
+            </div>
+
+            {/* Location buttons */}
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  closeStoreProfile();
+                  setTimeout(() => focusOnMap(store.id, 'stores'), 220);
+                }}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-[0.98] transition-colors"
+              >
+                <Map className="w-4 h-4" />
+                View on Map
+              </button>
+              <a
+                href={`https://www.google.com/maps?q=${store.locationCoords.lat},${store.locationCoords.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-[0.98] transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Google Maps
+              </a>
             </div>
             {isAdmin && (
               <div className="mt-2 text-center">

@@ -29,6 +29,8 @@ interface AppState {
   darkMode: boolean;
   isAdmin: boolean;
   activeTab: 'feed' | 'map' | 'search' | 'profile';
+  mapFocusId: string | null;
+  mapFocusMode: 'prices' | 'stores';
 }
 
 interface AppContextType extends AppState {
@@ -58,6 +60,8 @@ interface AppContextType extends AppState {
   openReportModal: (payload: { type: 'post' | 'store'; id: string; label: string }) => void;
   closeReportModal: () => void;
   setActiveTab: (tab: AppState['activeTab']) => void;
+  focusOnMap: (id: string, mode?: 'prices' | 'stores') => void;
+  clearMapFocus: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -94,6 +98,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     darkMode: getInitialDarkMode(),
     isAdmin: false,
     activeTab: 'feed',
+    mapFocusId: null,
+    mapFocusMode: 'prices',
   });
 
   useEffect(() => {
@@ -280,6 +286,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const closeReportModal = useCallback(() => setState(s => ({ ...s, showReportModal: null })), []);
   const setActiveTab = useCallback((tab: AppState['activeTab']) => setState(s => ({ ...s, activeTab: tab })), []);
+  const focusOnMap = useCallback((id: string, mode: 'prices' | 'stores' = 'prices') => {
+    setState(s => ({ ...s, activeTab: 'map', mapFocusId: id, mapFocusMode: mode }));
+  }, []);
+  const clearMapFocus = useCallback(() => {
+    setState(s => ({ ...s, mapFocusId: null }));
+  }, []);
 
   return (
     <AppContext.Provider
@@ -311,6 +323,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         openReportModal,
         closeReportModal,
         setActiveTab,
+        focusOnMap,
+        clearMapFocus,
       }}
     >
       {children}

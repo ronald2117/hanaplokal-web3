@@ -7,6 +7,8 @@ import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
 import { useLocation } from '../context/LocationContext';
+import type { Post } from '../data/mockData';
+import type { Store } from '../data/mockData';
 
 type MapMode = 'prices' | 'stores';
 const DEFAULT_CENTER: [number, number] = [14.0863, 121.1486];
@@ -35,8 +37,37 @@ function RecenterMap({ center }: { center: [number, number] }) {
   return null;
 }
 
+function FlyToFocus({
+  posts,
+  stores,
+  focusId,
+  onFocused,
+}: {
+  posts: Post[];
+  stores: Store[];
+  focusId: string | null;
+  onFocused: () => void;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focusId) return;
+    const post = posts.find(p => p.id === focusId);
+    if (post) {
+      map.flyTo([post.locationCoords.lat, post.locationCoords.lng], 17, { animate: true, duration: 1 });
+      onFocused();
+      return;
+    }
+    const store = stores.find(s => s.id === focusId);
+    if (store) {
+      map.flyTo([store.locationCoords.lat, store.locationCoords.lng], 17, { animate: true, duration: 1 });
+      onFocused();
+    }
+  }, [focusId, map, posts, stores, onFocused]);
+  return null;
+}
+
 export default function MapView() {
-  const { openPriceHistory, openStoreProfile, openCreateStore, isLoggedIn, openAuthModal } = useApp();
+  const { openPriceHistory, openStoreProfile, openCreateStore, isLoggedIn, openAuthModal, mapFocusId, mapFocusMode, clearMapFocus } = useApp();
   const { posts } = usePosts();
   const { stores, toggleStoreVouch, vouchedStores } = useStores();
   const { userLocation, radiusKm, setRadiusKm, isWithinRadius, refreshUserLocation } = useLocation();
@@ -46,6 +77,13 @@ export default function MapView() {
   const [filterCategory, setFilterCategory] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const mapCenter: [number, number] = [userLocation.lat || DEFAULT_CENTER[0], userLocation.lng || DEFAULT_CENTER[1]];
+
+  // When focusOnMap() is called from another sheet, switch mode + select the pin
+  useEffect(() => {
+    if (!mapFocusId) return;
+    setMapMode(mapFocusMode);
+    setSelectedPin(mapFocusId);
+  }, [mapFocusId, mapFocusMode]);
 
   const storeById = useMemo(() => {
     return new Map(stores.map(store => [store.id, store]));
@@ -187,6 +225,12 @@ export default function MapView() {
       <div className="flex-1 relative">
         <MapContainer center={mapCenter} zoom={14} className="h-full w-full z-0">
           <RecenterMap center={mapCenter} />
+          <FlyToFocus
+            posts={filteredPosts}
+            stores={filteredStores}
+            focusId={mapFocusId}
+            onFocused={clearMapFocus}
+          />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

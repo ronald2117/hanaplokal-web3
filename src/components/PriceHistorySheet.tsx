@@ -1,4 +1,4 @@
-import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag, Map, ExternalLink } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import SparklineChart from './SparklineChart';
@@ -13,6 +13,7 @@ export default function PriceHistorySheet() {
     openStoreProfile,
     openUserProfile,
     openReportModal,
+    focusOnMap,
   } = useApp();
   const { posts, toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet } = usePosts();
 
@@ -211,6 +212,29 @@ export default function PriceHistorySheet() {
             <button onClick={handleReport} className="w-12 h-11 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 inline-flex items-center justify-center transition-colors" aria-label="Report">
               <Flag className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Location buttons */}
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => {
+                closePriceHistory();
+                setTimeout(() => focusOnMap(post.id, 'prices'), 220);
+              }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors active:scale-[0.98]"
+            >
+              <Map className="w-4 h-4" />
+              View on Map
+            </button>
+            <a
+              href={`https://www.google.com/maps?q=${post.locationCoords.lat},${post.locationCoords.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors active:scale-[0.98]"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Google Maps
+            </a>
           </div>
         </div>
 
