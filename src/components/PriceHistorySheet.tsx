@@ -1,13 +1,15 @@
-import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag, Map, ExternalLink } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag, Map, ExternalLink, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import SparklineChart from './SparklineChart';
-import { mockMarketInsights } from '../data/mockData';
+import { mockMarketInsights, getCategoryEmoji, getMediaEmoji, getMediaGradient } from '../data/mockData';
+import { useLocation } from '../context/LocationContext';
 
 export default function PriceHistorySheet() {
   const {
     showPriceHistory,
     closePriceHistory,
+    openPriceHistory,
     requireAuth,
     openPriceAlert,
     openStoreProfile,
@@ -16,6 +18,7 @@ export default function PriceHistorySheet() {
     focusOnMap,
   } = useApp();
   const { posts, toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet } = usePosts();
+  const { isWithinRadius, getDistanceFromUser } = useLocation();
 
   if (!showPriceHistory) return null;
 
@@ -305,6 +308,52 @@ export default function PriceHistorySheet() {
             </p>
           </div>
         )}
+
+        {/* Similar Products Nearby */}
+        {(() => {
+          const similarPosts = posts.filter(p => 
+            p.id !== post.id && 
+            p.category === post.category && 
+            isWithinRadius(p.locationCoords)
+          );
+
+          if (similarPosts.length === 0) return null;
+
+          return (
+            <div className="mb-6">
+              <h4 className="text-sm font-bold text-gray-900 mb-3 px-1">Similar Products Nearby</h4>
+              <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar -mx-5 px-5">
+                {similarPosts.map(sp => {
+                  const distance = getDistanceFromUser(sp.locationCoords);
+                  const formattedDistance = distance < 1 ? '< 1' : distance.toFixed(1);
+                  return (
+                    <button
+                      key={sp.id}
+                      onClick={() => {
+                        closePriceHistory();
+                        setTimeout(() => openPriceHistory(sp.id), 300);
+                      }}
+                      className="snap-start flex-shrink-0 w-40 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-left active:scale-95 transition-transform"
+                    >
+                      <div className={`aspect-video bg-gradient-to-br ${getMediaGradient(sp.mediaUrl)} flex items-center justify-center`}>
+                        <span className="text-3xl">{getCategoryEmoji(sp.category) || getMediaEmoji(sp.mediaUrl)}</span>
+                      </div>
+                      <div className="p-3">
+                        <p className="font-bold text-gray-900 text-sm truncate">{sp.productName}</p>
+                        <p className="text-orange-600 font-black text-sm mt-0.5">₱{sp.price}/{sp.unit}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{sp.storeName}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {formattedDistance}km
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* 
         <button

@@ -138,7 +138,7 @@ export default function AuthModal() {
           onClick={() => {
             void login('google');
           }}
-          className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-200 active:scale-[0.98] transition-transform text-base disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-transform text-base disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {authBusy ? 'Please wait...' : 'Continue with Google'}
         </button>

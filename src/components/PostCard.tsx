@@ -3,6 +3,7 @@ import { Clock, ThumbsUp, MessageCircle, Share2, AlertTriangle, TrendingDown, Tr
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji, getCategoryEmoji } from '../data/mockData';
+import { useLocation } from '../context/LocationContext';
 
 interface PostCardProps {
   post: Post;
@@ -11,6 +12,7 @@ interface PostCardProps {
 export default function PostCard({ post }: PostCardProps) {
   const { openPriceHistory, openStoreProfile, openUserProfile, openReportModal, isAdmin, currentUser } = useApp();
   const { toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet, adminDeletePost, userDeletePost } = usePosts();
+  const { getDistanceFromUser } = useLocation();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmUserDelete, setConfirmUserDelete] = useState(false);
   const isOwner = Boolean(currentUser && currentUser.uid === post.userId);
@@ -20,6 +22,9 @@ export default function PostCard({ post }: PostCardProps) {
   // When no store was selected, storeName is 'Current Location' — show the
   // real geocoded address stored in post.location instead.
   const displayStoreName = post.storeName === 'Current Location' ? post.location : post.storeName;
+  
+  const distance = getDistanceFromUser(post.locationCoords);
+  const formattedDistance = distance < 1 ? '< 1' : distance.toFixed(1);
 
   const handleVouch = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,6 +123,10 @@ export default function PostCard({ post }: PostCardProps) {
             <span className="text-xs text-gray-400 flex items-center gap-0.5">
               <Clock className="w-3 h-3" />
               {getTimeAgo(post.timestamp)}
+            </span>
+            <span className="text-xs text-gray-400 flex items-center gap-0.5 ml-1">
+              • <MapPin className="w-3 h-3 ml-0.5" />
+              {formattedDistance}km
             </span>
           </div>
         </div>
