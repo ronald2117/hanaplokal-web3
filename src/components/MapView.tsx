@@ -76,7 +76,14 @@ export default function MapView() {
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [customRadius, setCustomRadius] = useState(String(radiusKm));
   const mapCenter: [number, number] = [userLocation.lat || DEFAULT_CENTER[0], userLocation.lng || DEFAULT_CENTER[1]];
+
+  const applyCustomRadius = () => {
+    const parsed = Number.parseFloat(customRadius);
+    if (!Number.isFinite(parsed)) return;
+    setRadiusKm(Number(Math.min(100, Math.max(0.5, parsed)).toFixed(1)));
+  };
 
   // When focusOnMap() is called from another sheet, switch mode + select the pin
   useEffect(() => {
@@ -205,16 +212,39 @@ export default function MapView() {
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1.5 block">Distance</label>
-                <div className="flex gap-2">
-                  {[1, 5, 10].map(distance => (
+                <div className="flex gap-2 mb-2">
+                  {[1, 5, 10, 25].map(distance => (
                     <button
                       key={distance}
-                      onClick={() => setRadiusKm(distance)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${radiusKm === distance ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}
+                      onClick={() => {
+                        setRadiusKm(distance);
+                        setCustomRadius(String(distance));
+                      }}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${radiusKm === distance ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}
                     >
                       {distance}km
                     </button>
                   ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0.5}
+                    max={100}
+                    step={0.1}
+                    value={customRadius}
+                    onChange={e => setCustomRadius(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') applyCustomRadius(); }}
+                    placeholder="Custom km"
+                    className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                  <button
+                    onClick={applyCustomRadius}
+                    className="h-9 px-4 rounded-lg bg-orange-500 text-white text-xs font-bold active:scale-95 transition-transform"
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             </div>
