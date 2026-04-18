@@ -346,6 +346,14 @@ export async function createComment(comment: Omit<Comment, 'id'>): Promise<void>
   await updateDoc(doc(db, 'posts', comment.postId), { commentCount: increment(1) });
 }
 
+export async function deleteComment(commentId: string, postId: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'comments', commentId));
+  batch.update(doc(db, 'posts', postId), { commentCount: increment(-1) });
+  await batch.commit();
+}
+
 export async function toggleVouch(postId: string, userId: string, alreadyVouched: boolean): Promise<void> {
   if (!db) throw new Error('Firebase is not configured');
 

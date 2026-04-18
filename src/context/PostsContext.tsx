@@ -11,6 +11,7 @@ import {
 import {
   createComment,
   createPost,
+  deleteComment as deleteCommentRemote,
   loadUserVouches,
   subscribeToComments,
   subscribeToPosts,
@@ -34,6 +35,7 @@ interface PostsContextType {
   closeCommentSheet: () => void;
   toggleVouch: (postId: string) => boolean;
   addComment: (postId: string, text: string) => boolean;
+  deleteComment: (commentId: string, postId: string) => void;
   addPost: (post: {
     productName: string;
     category: string;
@@ -241,6 +243,30 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     return true;
   }, [currentUser, isLoggedIn, onAuthRequired]);
 
+  const deleteComment = useCallback((commentId: string, postId: string): void => {
+    // Optimistic: remove locally and decrement count
+    const removed = comments.find(c => c.id === commentId);
+    setComments(prev => prev.filter(c => c.id !== commentId));
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId ? { ...p, commentCount: Math.max(p.commentCount - 1, 0) } : p
+      )
+    );
+
+    if (isFirebaseConfigured) {
+      deleteCommentRemote(commentId, postId).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to delete comment:', err);
+        // Rollback
+        if (removed) setComments(prev => [...prev, removed].sort((a, b) => a.timestamp - b.timestamp));
+        setPosts(prev =>
+          prev.map(p =>
+            p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p
+          )
+        );
+      });
+    }
+  }, [comments, isFirebaseConfigured]);
+
   const addPost = useCallback((postData: {
     productName: string;
     category: string;
@@ -424,6 +450,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         closeCommentSheet,
         toggleVouch,
         addComment,
+        deleteComment,
         addPost,
         deletePost,
         userDeletePost,
