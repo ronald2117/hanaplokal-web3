@@ -34,7 +34,7 @@ interface PostsContextType {
   openCommentSheet: (postId: string) => void;
   closeCommentSheet: () => void;
   toggleVouch: (postId: string) => boolean;
-  addComment: (postId: string, text: string) => boolean;
+  addComment: (postId: string, text: string, parentId?: string) => boolean;
   deleteComment: (commentId: string, postId: string) => void;
   addPost: (post: {
     productName: string;
@@ -198,7 +198,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     return true;
   }, [currentUser, isLoggedIn, onAuthRequired, vouchedPosts]);
 
-  const addComment = useCallback((postId: string, text: string): boolean => {
+  const addComment = useCallback((postId: string, text: string, parentId?: string): boolean => {
     if (!isLoggedIn) {
       onAuthRequired();
       return false;
@@ -215,6 +215,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       userAvatar: currentUser?.displayName?.slice(0, 2).toUpperCase() ?? 'YU',
       text: trimmed,
       timestamp: Date.now(),
+      ...(parentId ? { parentId } : {}),
     };
 
     setComments(prev => [...prev, newComment]);
@@ -233,6 +234,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         userAvatar: newComment.userAvatar,
         text: trimmed,
         timestamp: Date.now(),
+        ...(parentId ? { parentId } : {}),
       }).catch(err => {
         console.error('[HanapLokal] ❌ Failed to save comment to Firestore:', err);
       });

@@ -62,6 +62,7 @@ export interface Comment {
   userAvatar: string;
   text: string;
   timestamp: number;
+  parentId?: string;
 }
 
 export interface PriceAlert {
