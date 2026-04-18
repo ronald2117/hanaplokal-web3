@@ -418,6 +418,21 @@ export default function UploadModal() {
                   )}
                 </div>
               )}
+
+              {/* Create Store shortcut */}
+              <button
+                onClick={() => { handleClose(); setTimeout(() => openCreateStore(), 200); }}
+                className="mt-4 w-full flex items-center gap-3 p-3 rounded-2xl border-2 border-dashed border-orange-300 dark:border-orange-700/60 bg-orange-50/50 dark:bg-orange-900/20 text-left transition-all active:scale-[0.98] hover:bg-orange-50 dark:hover:bg-orange-900/30"
+              >
+                <div className="w-11 h-11 rounded-xl bg-orange-100 dark:bg-orange-800/40 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm text-orange-700 dark:text-orange-400">Create a Store</span>
+                  <p className="text-[11px] text-orange-500 dark:text-orange-500/80 mt-0.5">Add a new store to the community</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-orange-400 dark:text-orange-500 flex-shrink-0" />
+              </button>
             </div>
           )}
 
@@ -576,16 +591,16 @@ export default function UploadModal() {
               {/* Create New Store Button */}
               <button
                 onClick={() => openCreateStore()}
-                className="w-full flex items-center gap-3 p-3 mb-3 rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50/50 text-left transition-all active:scale-[0.98] hover:bg-orange-50"
+                className="w-full flex items-center gap-3 p-3 mb-3 rounded-2xl border-2 border-dashed border-orange-300 dark:border-orange-700/60 bg-orange-50/50 dark:bg-orange-900/20 text-left transition-all active:scale-[0.98] hover:bg-orange-50 dark:hover:bg-orange-900/30"
               >
-                <div className="w-11 h-11 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-6 h-6 text-orange-500" />
+                <div className="w-11 h-11 rounded-xl bg-orange-100 dark:bg-orange-800/40 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-6 h-6 text-orange-500 dark:text-orange-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-sm text-orange-700">Create New Store</span>
-                  <p className="text-[11px] text-orange-500 mt-0.5">Can't find the store? Add it to the community.</p>
+                  <span className="font-semibold text-sm text-orange-700 dark:text-orange-400">Create New Store</span>
+                  <p className="text-[11px] text-orange-500 dark:text-orange-500/80 mt-0.5">Can't find the store? Add it to the community.</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-orange-400 dark:text-orange-500 flex-shrink-0" />
               </button>
 
               {/* Search bar */}
