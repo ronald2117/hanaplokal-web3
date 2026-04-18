@@ -568,21 +568,21 @@ export default function UploadModal() {
                   );
                 }}
                 className={`w-full flex items-center gap-3 p-3 mb-3 rounded-2xl text-left transition-all active:scale-[0.98] ${selectedStoreId === ''
-                    ? 'bg-blue-50 ring-2 ring-blue-400'
-                    : 'bg-gray-50 hover:bg-gray-100'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-400 dark:ring-blue-600'
+                    : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-700/60'
                   }`}
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedStoreId === '' ? 'bg-blue-100' : 'bg-white'}`}>
-                  <MapPin className={`w-5 h-5 ${selectedStoreId === '' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedStoreId === '' ? 'bg-blue-100 dark:bg-blue-800/40' : 'bg-white dark:bg-gray-700'}`}>
+                  <MapPin className={`w-5 h-5 ${selectedStoreId === '' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className={`font-semibold text-sm ${selectedStoreId === '' ? 'text-blue-700' : 'text-gray-900'}`}>Use Current Location</span>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
+                  <span className={`font-semibold text-sm ${selectedStoreId === '' ? 'text-blue-700 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}>Use Current Location</span>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
                     {locationLoading ? 'Detecting your location...' : currentCoords ? 'Post will be pinned to your live location' : 'Fallback location will be Tanauan, Batangas'}
                   </p>
                 </div>
                 {selectedStoreId === '' && (
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <Check className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
@@ -793,7 +793,7 @@ export default function UploadModal() {
             }}
             disabled={!canProceed() || isUploading}
             className={`w-full py-4 font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${canProceed() && !isUploading
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200'
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
           >
