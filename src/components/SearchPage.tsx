@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Search, TrendingDown, TrendingUp, Minus, ArrowRight, Star, MapPin, CheckCircle, Clock, Plus, UserRound, ThumbsUp } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, TrendingDown, TrendingUp, Minus, ArrowRight, Star, MapPin, CheckCircle, Clock, Plus, UserRound, ThumbsUp, SlidersHorizontal } from 'lucide-react';
 import { categories, getStoreEmoji, getStoreTypeLabel } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
@@ -10,9 +10,34 @@ export default function SearchPage() {
   const { openPriceHistory, openStoreProfile, openUserProfile, openCreateStore, isLoggedIn, openAuthModal } = useApp();
   const { posts } = usePosts();
   const { stores } = useStores();
-  const { isWithinRadius, radiusKm } = useLocation();
+  const { isWithinRadius, radiusKm, setRadiusKm } = useLocation();
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [showRadiusMenu, setShowRadiusMenu] = useState(false);
+  const [customRadius, setCustomRadius] = useState('');
+  const radiusMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!radiusMenuRef.current) return;
+      if (!radiusMenuRef.current.contains(event.target as Node)) {
+        setShowRadiusMenu(false);
+      }
+    };
+    if (showRadiusMenu) {
+      setCustomRadius(radiusKm.toString());
+      document.addEventListener('mousedown', onClickOutside);
+    }
+    return () => { document.removeEventListener('mousedown', onClickOutside); };
+  }, [showRadiusMenu, radiusKm]);
+
+  const applyCustomRadius = () => {
+    const parsed = Number.parseFloat(customRadius);
+    if (!Number.isFinite(parsed)) return;
+    const normalized = Math.min(100, Math.max(0.5, parsed));
+    setRadiusKm(Number(normalized.toFixed(1)));
+    setShowRadiusMenu(false);
+  };
 
   const nearbyPosts = posts.filter(post => isWithinRadius(post.locationCoords));
   const nearbyStores = stores.filter(store => isWithinRadius(store.locationCoords));
@@ -210,11 +235,66 @@ export default function SearchPage() {
       {/* Header */}
       <div className="bg-white pt-12 pb-4 px-4 shadow-sm">
         <div className="max-w-lg mx-auto">
-          <h2 className="text-xl font-black text-gray-900 mb-3">Search</h2>
-          <p className="text-xs text-gray-500 mb-3">Showing results within {radiusKm}km of your location</p>
+          <div ref={radiusMenuRef} className="relative flex items-start justify-between mb-0.5">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 leading-tight">Search</h2>
+              <div className="flex items-center gap-1 mt-0.5 mb-3">
+                <MapPin className="w-3 h-3 text-orange-500" />
+                <span className="text-xs font-semibold text-gray-500">Within {radiusKm} km</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowRadiusMenu(prev => !prev)}
+              className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center active:scale-95 transition-transform hover:bg-orange-50 flex-shrink-0"
+              aria-label="Set search radius"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-gray-500" />
+            </button>
+
+            {showRadiusMenu && (
+              <div className="absolute right-0 top-10 w-52 bg-white rounded-xl shadow-xl border border-orange-100 p-2 z-40 animate-fade-in-up">
+                <p className="text-[11px] font-bold text-gray-500 px-2 pb-1">Search Radius</p>
+                {[1, 5, 10].map(option => (
+                  <button
+                    key={option}
+                    onClick={() => { setRadiusKm(option); setShowRadiusMenu(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${radiusKm === option
+                        ? 'bg-orange-500 text-white'
+                        : 'text-gray-700 hover:bg-orange-50'
+                      }`}
+                  >
+                    {option} km
+                  </button>
+                ))}
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <p className="text-[11px] font-bold text-gray-500 px-2 pb-1">Custom (km)</p>
+                  <div className="flex items-center gap-2 px-2">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0.5}
+                      max={100}
+                      step={0.1}
+                      value={customRadius}
+                      onChange={e => setCustomRadius(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') applyCustomRadius(); }}
+                      className="w-full h-9 px-2.5 rounded-lg border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      placeholder="e.g. 3.5"
+                    />
+                    <button
+                      onClick={applyCustomRadius}
+                      className="h-9 px-3 rounded-lg bg-orange-500 text-white text-xs font-bold active:scale-95"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Search input */}
-          <div className="relative">
+          <div className="relative mb-3">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
@@ -231,11 +311,10 @@ export default function SearchPage() {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                  activeCategory === cat
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeCategory === cat
                     ? 'bg-orange-500 text-white'
                     : 'bg-gray-100 text-gray-600'
-                }`}
+                  }`}
               >
                 {cat}
               </button>
