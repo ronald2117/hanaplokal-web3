@@ -242,9 +242,15 @@ export async function createStore(store: Store): Promise<string> {
 export function subscribeToDeletedStores(onData: (stores: import('../data/mockData').Store[]) => void): Unsubscribe | null {
   if (!db) return null;
   const q = query(collection(db, 'deletedStores'), orderBy('deletedAt', 'desc'), limit(200));
-  return onSnapshot(q, snapshot => {
-    onData(snapshot.docs.map(item => toStore(item.id, item.data())));
-  });
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toStore(item.id, item.data())));
+    },
+    err => {
+      console.warn('[HanapLokal] ❌ subscribeToDeletedStores failed:', err.message);
+    }
+  );
 }
 
 export async function softDeleteStore(store: import('../data/mockData').Store, adminId: string, adminName: string): Promise<void> {
@@ -275,9 +281,15 @@ export async function restoreStore(store: import('../data/mockData').Store): Pro
 export function subscribeToDeletedPosts(onData: (posts: Post[]) => void): Unsubscribe | null {
   if (!db) return null;
   const q = query(collection(db, 'deletedPosts'), orderBy('deletedAt', 'desc'), limit(200));
-  return onSnapshot(q, snapshot => {
-    onData(snapshot.docs.map(item => toPost(item.id, item.data())));
-  });
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toPost(item.id, item.data())));
+    },
+    err => {
+      console.warn('[HanapLokal] ❌ subscribeToDeletedPosts failed:', err.message);
+    }
+  );
 }
 
 export async function softDeletePost(post: Post, adminId: string, adminName: string): Promise<void> {
@@ -438,9 +450,15 @@ export async function loadUserStoreVouches(userId: string): Promise<Set<string>>
 export function subscribeToReports(onData: (reports: ModerationReport[]) => void): Unsubscribe | null {
   if (!db) return null;
   const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(300));
-  return onSnapshot(q, snapshot => {
-    onData(snapshot.docs.map(item => toReport(item.id, item.data())));
-  });
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toReport(item.id, item.data())));
+    },
+    err => {
+      console.warn('[HanapLokal] ❌ subscribeToReports failed:', err.message);
+    }
+  );
 }
 
 export async function createReport(report: Omit<ModerationReport, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {

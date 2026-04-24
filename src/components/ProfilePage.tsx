@@ -29,6 +29,7 @@ import {
   Flame,
   RotateCcw,
 } from 'lucide-react';
+import { updateProfile } from 'firebase/auth';
 import { useApp } from '../context/AppContext';
 import { useLocation } from '../context/LocationContext';
 import { usePosts } from '../context/PostsContext';
@@ -105,7 +106,7 @@ export default function ProfilePage() {
         .toUpperCase()
     : 'HL';
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     const r = parseFloat(settingsRadius);
     if (!isNaN(r)) {
       if (r > 100) {
@@ -116,6 +117,15 @@ export default function ProfilePage() {
         setRadiusKm(r);
       }
     }
+
+    if (currentUser && displayName && displayName !== currentUser.displayName) {
+      try {
+        await updateProfile(currentUser, { displayName });
+      } catch (err) {
+        console.error('Failed to update profile name:', err);
+      }
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
