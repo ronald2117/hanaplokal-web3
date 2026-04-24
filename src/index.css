@@ -116,6 +116,34 @@ body {
   color: #e5e7eb !important;
 }
 
+/* Danger Zone / Red Overrides */
+.dark .bg-red-50 {
+  background-color: #450a0a !important;
+}
+
+.dark .bg-red-100 {
+  background-color: #7f1d1d !important;
+}
+
+.dark .border-red-200,
+.dark .border-red-300 {
+  border-color: #7f1d1d !important;
+}
+
+.dark .text-red-900,
+.dark .text-red-700,
+.dark .text-red-600 {
+  color: #fca5a5 !important;
+}
+
+.dark .text-red-500 {
+  color: #f87171 !important;
+}
+
+.dark .placeholder-red-300::placeholder {
+  color: #991b1b !important;
+}
+
 .dark .text-gray-600,
 .dark .text-gray-500 {
   color: #cbd5e1 !important;

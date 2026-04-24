@@ -54,6 +54,7 @@ export default function ProfilePage() {
     darkMode,
     toggleDarkMode,
     deactivateAccount,
+    deleteAccount,
   } = useApp();
   const { radiusKm, setRadiusKm } = useLocation();
   const {
@@ -89,6 +90,9 @@ export default function ProfilePage() {
   const [notifTrending, setNotifTrending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentUserId = currentUser?.uid ?? 'current_user';
 
@@ -1424,11 +1428,56 @@ export default function ProfilePage() {
             Log Out
           </button>
 
-          {/* Danger Zone: Deactivate Account */}
+          {/* Danger Zone: Deactivate or Delete Account */}
           <div className="mt-2 rounded-2xl border border-red-200 bg-red-50 p-4">
             <p className="text-xs font-bold text-red-600 mb-1 uppercase tracking-wide">Danger Zone</p>
-            {confirmDeactivate ? (
-              <>
+            
+            {showDeleteConfirm ? (
+              <div className="mt-4 border-t border-red-200 pt-3">
+                <p className="text-sm text-red-700 font-semibold mb-2">Permanently delete your account?</p>
+                <p className="text-xs text-red-500 mb-3">This action cannot be undone. All your data will be permanently removed. Type <span className="font-bold text-red-700">delete my account</span> to confirm.</p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type 'delete my account'"
+                  className="w-full border border-red-300 rounded-xl px-3 py-2 text-sm text-red-900 placeholder-red-300 mb-3 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (deleteConfirmText.toLowerCase() === 'delete my account') {
+                        setIsDeleting(true);
+                        try {
+                          await deleteAccount();
+                        } catch (e) {
+                          // Error handled in context
+                        } finally {
+                          setIsDeleting(false);
+                          setShowDeleteConfirm(false);
+                          setDeleteConfirmText('');
+                        }
+                      }
+                    }}
+                    disabled={deleteConfirmText.toLowerCase() !== 'delete my account' || isDeleting}
+                    className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    disabled={isDeleting}
+                    className="flex-1 py-2.5 rounded-xl bg-white border border-red-200 text-red-700 text-sm font-semibold active:scale-95 transition-transform disabled:opacity-50 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : confirmDeactivate ? (
+              <div className="mt-4 border-t border-red-200 pt-3">
                 <p className="text-sm text-red-700 font-semibold mb-1">Deactivate your account?</p>
                 <p className="text-xs text-red-500 mb-3">All your posts will be removed. You can reactivate by logging back in.</p>
                 <div className="flex gap-2">
@@ -1440,19 +1489,27 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={() => setConfirmDeactivate(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold active:scale-95 transition-transform"
+                    className="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold active:scale-95 transition-transform hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                 </div>
-              </>
+              </div>
             ) : (
-              <button
-                onClick={() => setConfirmDeactivate(true)}
-                className="w-full py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-sm font-bold active:scale-95 transition-transform"
-              >
-                Deactivate Account
-              </button>
+              <div className="flex flex-col gap-2 mt-3">
+                <button
+                  onClick={() => setConfirmDeactivate(true)}
+                  className="w-full py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-sm font-bold active:scale-95 transition-transform hover:bg-red-50"
+                >
+                  Deactivate Account
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full py-2.5 rounded-xl bg-red-100 border border-red-200 text-red-700 text-sm font-bold active:scale-95 transition-transform hover:bg-red-200"
+                >
+                  Delete Account
+                </button>
+              </div>
             )}
           </div>
 

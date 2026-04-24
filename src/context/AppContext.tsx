@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  deleteUser,
   type User,
 } from 'firebase/auth';
 import { auth, facebookProvider, googleProvider, isFirebaseConfigured } from '../lib/firebase';
@@ -65,6 +66,7 @@ interface AppContextType extends AppState {
   clearMapFocus: () => void;
   deactivateAccount: () => void;
   reactivateAccount: () => void;
+  deleteAccount: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -313,6 +315,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, isDeactivated: false }));
   }, [state.currentUser?.uid]);
 
+  const deleteAccount = useCallback(async () => {
+    const user = auth?.currentUser;
+    if (!user) return;
+    try {
+      await deleteUser(user);
+      setState(s => ({ ...s, isLoggedIn: false, isAdmin: false, activeTab: 'feed', currentUser: null, isDeactivated: false }));
+    } catch (err: any) {
+      if (err.code === 'auth/requires-recent-login') {
+        setState(s => ({ ...s, authError: 'Please log in again to delete your account.', showAuthModal: true }));
+      } else {
+        setState(s => ({ ...s, authError: 'Could not delete account. Please try again later.' }));
+      }
+      throw err;
+    }
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -347,6 +365,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearMapFocus,
         deactivateAccount,
         reactivateAccount,
+        deleteAccount,
       }}
     >
       {children}
