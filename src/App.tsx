@@ -4,6 +4,7 @@ import { PostsProvider } from './context/PostsContext';
 import { StoresProvider } from './context/StoresContext';
 import { ReportsProvider } from './context/ReportsContext';
 import { MessagesProvider } from './context/MessagesContext';
+import { BanProvider } from './context/BanContext';
 import BottomNav from './components/BottomNav';
 import Feed from './components/Feed';
 import MapView from './components/MapView';
@@ -65,7 +66,9 @@ export default function App() {
   return (
     <AppProvider>
       <LocationProvider>
-        <AppContent />
+        <BanProvider>
+          <AppContent />
+        </BanProvider>
       </LocationProvider>
     </AppProvider>
   );

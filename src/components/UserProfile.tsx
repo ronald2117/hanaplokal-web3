@@ -1,7 +1,9 @@
-import { X, CheckCircle, MapPin, Clock, ThumbsUp, MessageCircle, ChevronRight, Send } from 'lucide-react';
+import { useState } from 'react';
+import { X, CheckCircle, MapPin, Clock, ThumbsUp, MessageCircle, ChevronRight, Send, ShieldOff, ShieldCheck as ShieldCheckIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { useLocation } from '../context/LocationContext';
+import { useBan } from '../context/BanContext';
 import { getTimeAgo, getMediaEmoji } from '../data/mockData';
 
 export default function UserProfile() {
@@ -13,9 +15,12 @@ export default function UserProfile() {
     currentUser,
     isLoggedIn,
     requireAuth,
+    isAdmin,
   } = useApp();
-  const { posts } = usePosts();
+  const { posts, comments, adminDeletePost, deleteComment } = usePosts();
   const { isWithinRadius } = useLocation();
+  const { isBanned, banUser, unbanUser } = useBan();
+  const [confirmBan, setConfirmBan] = useState(false);
 
   if (!showUserProfile) return null;
 
@@ -42,6 +47,26 @@ export default function UserProfile() {
 
     closeUserProfile();
     setTimeout(() => openMessages(showUserProfile), 250);
+  };
+
+  const handleBanUser = () => {
+    const targetId = showUserProfile;
+
+    // 1. Delete all posts by this user (admin soft-delete)
+    const userAllPosts = posts.filter(p => p.userId === targetId);
+    userAllPosts.forEach(post => adminDeletePost(post));
+
+    // 2. Delete all comments by this user across every post
+    const userComments = comments.filter(c => c.userId === targetId);
+    userComments.forEach(comment => deleteComment(comment.id, comment.postId));
+
+    // 3. Record the ban
+    banUser(
+      { userId: targetId, userName: profileSource.userName, userAvatar: profileSource.userAvatar },
+      currentUser?.displayName ?? 'Admin'
+    );
+
+    setConfirmBan(false);
   };
 
   return (
@@ -102,6 +127,55 @@ export default function UserProfile() {
                 <Send className="w-4 h-4" />
                 Message {profileSource.userName}
               </button>
+            )}
+
+            {/* Admin ban/unban controls */}
+            {isAdmin && showUserProfile !== (currentUser?.uid ?? '') && (
+              isBanned(showUserProfile) ? (
+                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShieldOff className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-bold text-red-600">This user is banned</span>
+                  </div>
+                  <button
+                    onClick={() => unbanUser(showUserProfile)}
+                    className="w-full py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-sm font-bold active:scale-[0.98] transition-transform"
+                  >
+                    Unban User
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  {confirmBan ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                      <p className="text-sm font-bold text-red-600 mb-1">Confirm ban?</p>
+                      <p className="text-xs text-red-500 mb-3">All posts and comments by {profileSource.userName} will be permanently deleted and they will no longer be able to contribute.</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleBanUser}
+                          className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold active:scale-95 transition-transform"
+                        >
+                          Yes, Ban User
+                        </button>
+                        <button
+                          onClick={() => setConfirmBan(false)}
+                          className="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-sm font-semibold active:scale-95 transition-transform"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmBan(true)}
+                      className="w-full rounded-2xl border border-red-200 bg-red-50 text-red-600 font-bold py-3 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                    >
+                      <ShieldOff className="w-4 h-4" />
+                      Ban User
+                    </button>
+                  )}
+                </div>
+              )
             )}
           </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MapPin, SlidersHorizontal, TrendingDown, Flame } from 'lucide-react';
 import { usePosts } from '../context/PostsContext';
 import { useLocation } from '../context/LocationContext';
+import { useBan } from '../context/BanContext';
 import PostCard from './PostCard';
 
 function PostSkeleton() {
@@ -28,6 +29,7 @@ export default function Feed() {
   const [customRadius, setCustomRadius] = useState('');
   const { posts, postsLoading } = usePosts();
   const { isWithinRadius, radiusKm, setRadiusKm } = useLocation();
+  const { isBanned } = useBan();
   const radiusMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function Feed() {
     };
   }, [showRadiusMenu]);
 
-  const nearbyPosts = posts.filter(post => isWithinRadius(post.locationCoords));
+  const nearbyPosts = posts.filter(post => isWithinRadius(post.locationCoords) && !isBanned(post.userId));
 
   const applyCustomRadius = () => {
     const parsed = Number.parseFloat(customRadius);

@@ -35,9 +35,10 @@ import { usePosts } from '../context/PostsContext';
 import { useStores } from '../context/StoresContext';
 import { useReports } from '../context/ReportsContext';
 import { useMessages } from '../context/MessagesContext';
+import { useBan } from '../context/BanContext';
 import { getTimeAgo, getMediaEmoji, getStoreEmoji } from '../data/mockData';
 
-type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores';
+type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores' | 'adminBannedUsers';
 
 export default function ProfilePage() {
   const {
@@ -72,6 +73,7 @@ export default function ProfilePage() {
   const { stores, deletedStores, restoreStore } = useStores();
   const { reports, updateReportStatus } = useReports();
   const { conversations } = useMessages();
+  const { bannedUsers, unbanUser } = useBan();
 
   const [subView, setSubView] = useState<SubView>('main');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -1016,6 +1018,62 @@ export default function ProfilePage() {
     );
   }
 
+  if (subView === 'adminBannedUsers') {
+    return (
+      <div className="pb-24 min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 pt-14 pb-5 px-4 rounded-b-3xl">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSubView('main')}
+                className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h2 className="text-white text-xl font-bold flex-1">Banned Users</h2>
+              <div className="bg-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-white text-sm font-bold">{bannedUsers.length}</span>
+                <span className="text-red-100 text-xs ml-1">banned</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-3">
+          {bannedUsers.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="text-5xl mb-3">🛡️</div>
+              <h3 className="font-bold text-gray-900 mb-1">No banned users</h3>
+              <p className="text-sm text-gray-500">Banned users will appear here.</p>
+            </div>
+          ) : (
+            bannedUsers.map(user => (
+              <div key={user.userId} className="bg-white rounded-2xl shadow-sm border border-red-100 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-300 to-red-500 text-white text-sm font-black flex items-center justify-center flex-shrink-0">
+                    {user.userAvatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 truncate">{user.userName}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Banned {getTimeAgo(user.bannedAt)} · by {user.bannedBy}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => unbanUser(user.userId)}
+                    className="px-3 py-2 rounded-xl bg-orange-500 text-white text-xs font-bold active:scale-95 transition-transform flex-shrink-0"
+                  >
+                    Unban
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (subView === 'adminDeletedStores') {
     return (
       <div className="pb-24 min-h-screen bg-gray-50">
@@ -1460,6 +1518,17 @@ export default function ProfilePage() {
               </div>
               <span className="flex-1 font-medium text-gray-900 text-sm">Deleted Stores</span>
               <span className="text-xs text-red-500 font-bold">{deletedStores.length}</span>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
+            <button
+              onClick={() => setSubView('adminBannedUsers')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-4.5 h-4.5 text-red-500" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Banned Users</span>
+              <span className="text-xs text-red-500 font-bold">{bannedUsers.length}</span>
               <ChevronRight className="w-4 h-4 text-gray-300" />
             </button>
           </div>
