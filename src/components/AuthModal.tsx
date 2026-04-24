@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ShieldCheck, Camera, Bell, MessageCircle } from 'lucide-react';
+import { X, ShieldCheck, Camera, Bell, MessageCircle, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { isFirebaseConfigured } from '../lib/firebase';
 
@@ -17,6 +17,7 @@ export default function AuthModal() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   if (!showAuthModal) return null;
 
@@ -80,7 +81,7 @@ export default function AuthModal() {
           <div className="grid grid-cols-2 gap-2 mb-3">
             <button
               disabled={authBusy}
-              onClick={() => setAuthMode('login')}
+              onClick={() => { setAuthMode('login'); setShowPassword(false); }}
               className={`py-2 rounded-xl text-sm font-semibold transition-colors ${
                 authMode === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
               }`}
@@ -89,7 +90,7 @@ export default function AuthModal() {
             </button>
             <button
               disabled={authBusy}
-              onClick={() => setAuthMode('signup')}
+              onClick={() => { setAuthMode('signup'); setShowPassword(false); }}
               className={`py-2 rounded-xl text-sm font-semibold transition-colors ${
                 authMode === 'signup' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
               }`}
@@ -107,14 +108,25 @@ export default function AuthModal() {
               placeholder="Email"
               className="w-full h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-orange-200"
             />
-            <input
-              type="password"
-              autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder={authMode === 'signup' ? 'Password (min 6 chars)' : 'Password'}
-              className="w-full h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-orange-200"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') void submitEmailAuth(); }}
+                placeholder={authMode === 'signup' ? 'Password (min 6 chars)' : 'Password'}
+                className="w-full h-11 rounded-xl border border-gray-200 bg-white px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-orange-200"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
             <button
               disabled={authBusy}
               onClick={() => {
