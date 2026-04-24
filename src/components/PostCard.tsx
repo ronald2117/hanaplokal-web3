@@ -280,20 +280,27 @@ export default function PostCard({ post }: PostCardProps) {
             </button>
           )
         )}
+      </div>
 
-        {/* Admin delete button */}
-        {isAdmin && (
-          confirmDelete ? (
-            <div className="flex items-center gap-1 ml-1">
+      {/* Admin delete banner — always visible to admins */}
+      {isAdmin && (
+        <div
+          className="mx-3 mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 flex items-center gap-2"
+          onClick={e => e.stopPropagation()}
+        >
+          <Trash2 className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <span className="text-xs font-bold text-red-600 flex-1">Admin · Delete Post</span>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={e => { e.stopPropagation(); adminDeletePost(post); setConfirmDelete(false); }}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95 transition-transform"
               >
-                Delete
+                Confirm Delete
               </button>
               <button
                 onClick={e => { e.stopPropagation(); setConfirmDelete(false); }}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 active:scale-95"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-gray-200 text-gray-600 active:scale-95 transition-transform"
               >
                 Cancel
               </button>
@@ -301,14 +308,14 @@ export default function PostCard({ post }: PostCardProps) {
           ) : (
             <button
               onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-50 transition-colors active:scale-95"
+              className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95 transition-transform"
               aria-label="Admin delete post"
             >
-              <Trash2 className="w-4 h-4" />
+              Delete
             </button>
-          )
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
