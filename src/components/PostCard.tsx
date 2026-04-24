@@ -22,7 +22,7 @@ export default function PostCard({ post }: PostCardProps) {
   // When no store was selected, storeName is 'Current Location' — show the
   // real geocoded address stored in post.location instead.
   const displayStoreName = post.storeName === 'Current Location' ? post.location : post.storeName;
-  
+
   const distance = getDistanceFromUser(post.locationCoords);
   const formattedDistance = distance < 1 ? '< 1' : distance.toFixed(1);
 
@@ -130,12 +130,12 @@ export default function PostCard({ post }: PostCardProps) {
             </span>
           </div>
         </div>
-        {age === 'expiring' && (
+        {/* {age === 'expiring' && (
           <div className="flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full">
             <AlertTriangle className="w-3 h-3" />
             Expiring
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Media section */}
@@ -213,8 +213,8 @@ export default function PostCard({ post }: PostCardProps) {
         <button
           onClick={handleVouch}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all active:scale-95 ${isVouched
-              ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
-              : 'bg-orange-50 hover:bg-orange-100 text-orange-600'
+            ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
+            : 'bg-orange-50 hover:bg-orange-100 text-orange-600'
             }`}
         >
           <ThumbsUp className={`w-4 h-4 ${isVouched ? 'fill-current' : ''}`} />
