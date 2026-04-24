@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, CircleMarker, useMap } from 'react-leaflet';
 import { divIcon, type DivIcon } from 'leaflet';
-import { ChevronDown, Clock, Filter, MapPin, Navigation, Plus, ThumbsUp, X } from 'lucide-react';
+import { ChevronDown, Clock, Filter, MapPin, Navigation, Plus, SlidersHorizontal, Tag, ThumbsUp, X } from 'lucide-react';
 import { categories, getCategoryEmoji, getMediaEmoji, getStoreEmoji, getStoreTypeLabel, getTimeAgo } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
@@ -75,8 +75,11 @@ export default function MapView() {
   const [mapMode, setMapMode] = useState<MapMode>('prices');
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('All');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showRadiusMenu, setShowRadiusMenu] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [customRadius, setCustomRadius] = useState(String(radiusKm));
+  const radiusMenuRef = useRef<HTMLDivElement | null>(null);
+  const categoryMenuRef = useRef<HTMLDivElement | null>(null);
   const mapCenter: [number, number] = [userLocation.lat || DEFAULT_CENTER[0], userLocation.lng || DEFAULT_CENTER[1]];
 
   const applyCustomRadius = () => {
@@ -88,6 +91,16 @@ export default function MapView() {
     }
     setRadiusKm(Number(Math.max(0.5, parsed).toFixed(1)));
   };
+
+  // Close popovers on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (radiusMenuRef.current && !radiusMenuRef.current.contains(e.target as Node)) setShowRadiusMenu(false);
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(e.target as Node)) setShowCategoryMenu(false);
+    };
+    if (showRadiusMenu || showCategoryMenu) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showRadiusMenu, showCategoryMenu]);
 
   // When focusOnMap() is called from another sheet, switch mode + select the pin
   useEffect(() => {
@@ -161,98 +174,117 @@ export default function MapView() {
     <div className="h-screen flex flex-col pb-20">
       <div className="bg-white pt-12 pb-3 px-4 shadow-sm z-20 relative">
         <div className="max-w-lg mx-auto">
+          {/* Header row: title + icon buttons */}
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">{mapMode === 'prices' ? 'Products Near Me' : 'Nearby Stores'}</h2>
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                Within {radiusKm}km search radius
+                Within {radiusKm}km
+                {filterCategory !== 'All' && <span className="ml-1 text-orange-500 font-semibold">· {filterCategory}</span>}
               </p>
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showFilters ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}
-            >
-              <Filter className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Category popover */}
+              <div ref={categoryMenuRef} className="relative">
+                <button
+                  onClick={() => { setShowCategoryMenu(p => !p); setShowRadiusMenu(false); }}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                    filterCategory !== 'All' ? 'bg-orange-500 text-white' : showCategoryMenu ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'
+                  }`}
+                  aria-label="Filter by category"
+                >
+                  <Tag className="w-4.5 h-4.5" />
+                </button>
+                {showCategoryMenu && (
+                  <div className="absolute right-0 top-12 w-52 bg-white rounded-xl shadow-xl border border-orange-100 p-2 z-50 animate-fade-in-up">
+                    <p className="text-[11px] font-bold text-gray-500 px-2 pb-1">Category</p>
+                    <div className="max-h-60 overflow-y-auto space-y-0.5">
+                      {['All', ...categories.filter(c => c !== 'All')].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => { setFilterCategory(cat); setShowCategoryMenu(false); }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                            filterCategory === cat ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-50'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Radius popover */}
+              <div ref={radiusMenuRef} className="relative">
+                <button
+                  onClick={() => { setShowRadiusMenu(p => !p); setShowCategoryMenu(false); }}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                    showRadiusMenu ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                  aria-label="Set search radius"
+                >
+                  <SlidersHorizontal className="w-5 h-5" />
+                </button>
+                {showRadiusMenu && (
+                  <div className="absolute right-0 top-12 w-52 bg-white rounded-xl shadow-xl border border-orange-100 p-2 z-50 animate-fade-in-up">
+                    <p className="text-[11px] font-bold text-gray-500 px-2 pb-1">Search Radius</p>
+                    {[1, 5, 10, 25].map(option => (
+                      <button
+                        key={option}
+                        onClick={() => { setRadiusKm(option); setCustomRadius(String(option)); setShowRadiusMenu(false); }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                          radiusKm === option ? 'bg-orange-500 text-white' : 'text-gray-700 hover:bg-orange-50'
+                        }`}
+                      >
+                        {option} km
+                      </button>
+                    ))}
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <p className="text-[11px] font-bold text-gray-500 px-2 pb-1">Custom (km)</p>
+                      <div className="flex items-center gap-2 px-2">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0.5}
+                          max={100}
+                          step={0.1}
+                          value={customRadius}
+                          onChange={e => setCustomRadius(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') applyCustomRadius(); }}
+                          className="w-full h-9 px-2.5 rounded-lg border border-gray-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400"
+                          placeholder="e.g. 3.5"
+                        />
+                        <button
+                          onClick={applyCustomRadius}
+                          className="h-9 px-3 rounded-lg bg-orange-500 text-white text-xs font-bold active:scale-95"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-2">
+          {/* Prices / Stores mode toggle */}
+          <div className="flex bg-gray-100 rounded-xl p-1">
             <button
-              onClick={() => {
-                setMapMode('prices');
-                setSelectedPin(null);
-              }}
+              onClick={() => { setMapMode('prices'); setSelectedPin(null); }}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mapMode === 'prices' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
             >
               Prices
             </button>
             <button
-              onClick={() => {
-                setMapMode('stores');
-                setSelectedPin(null);
-              }}
+              onClick={() => { setMapMode('stores'); setSelectedPin(null); }}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mapMode === 'stores' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
             >
               Stores
             </button>
           </div>
-
-          {showFilters && (
-            <div className="mt-2 space-y-3 animate-fade-in">
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Category</label>
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setFilterCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${filterCategory === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 mb-1.5 block">Distance</label>
-                <div className="flex gap-2 mb-2">
-                  {[1, 5, 10, 25].map(distance => (
-                    <button
-                      key={distance}
-                      onClick={() => {
-                        setRadiusKm(distance);
-                        setCustomRadius(String(distance));
-                      }}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${radiusKm === distance ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}
-                    >
-                      {distance}km
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0.5}
-                    max={100}
-                    step={0.1}
-                    value={customRadius}
-                    onChange={e => setCustomRadius(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') applyCustomRadius(); }}
-                    placeholder="Custom km"
-                    className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  />
-                  <button
-                    onClick={applyCustomRadius}
-                    className="h-9 px-4 rounded-lg bg-orange-500 text-white text-xs font-bold active:scale-95 transition-transform"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
