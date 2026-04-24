@@ -53,6 +53,7 @@ export default function ProfilePage() {
     isAdmin,
     darkMode,
     toggleDarkMode,
+    deactivateAccount,
   } = useApp();
   const { radiusKm, setRadiusKm } = useLocation();
   const {
@@ -69,6 +70,7 @@ export default function ProfilePage() {
     openCommentSheet,
     toggleAlertActive,
     deleteAlert,
+    userDeletePost,
   } = usePosts();
   const { stores, deletedStores, restoreStore } = useStores();
   const { reports, updateReportStatus } = useReports();
@@ -86,6 +88,7 @@ export default function ProfilePage() {
   const [notifComments, setNotifComments] = useState(true);
   const [notifTrending, setNotifTrending] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   const currentUserId = currentUser?.uid ?? 'current_user';
 
@@ -111,6 +114,15 @@ export default function ProfilePage() {
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleDeactivate = () => {
+    // Delete all of the user's own posts
+    const myPostsToDelete = posts.filter(p => p.userId === (currentUser?.uid ?? 'current_user'));
+    myPostsToDelete.forEach(post => userDeletePost(post));
+    // Mark account as deactivated and log out
+    deactivateAccount();
+    void logout();
   };
 
   // My posts
@@ -1411,6 +1423,38 @@ export default function ProfilePage() {
             <LogOut className="w-4.5 h-4.5" />
             Log Out
           </button>
+
+          {/* Danger Zone: Deactivate Account */}
+          <div className="mt-2 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="text-xs font-bold text-red-600 mb-1 uppercase tracking-wide">Danger Zone</p>
+            {confirmDeactivate ? (
+              <>
+                <p className="text-sm text-red-700 font-semibold mb-1">Deactivate your account?</p>
+                <p className="text-xs text-red-500 mb-3">All your posts will be removed. You can reactivate by logging back in.</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeactivate}
+                    className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold active:scale-95 transition-transform"
+                  >
+                    Yes, Deactivate
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeactivate(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold active:scale-95 transition-transform"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => setConfirmDeactivate(true)}
+                className="w-full py-2.5 rounded-xl bg-white border border-red-200 text-red-600 text-sm font-bold active:scale-95 transition-transform"
+              >
+                Deactivate Account
+              </button>
+            )}
+          </div>
 
           <div className="h-4" />
         </div>

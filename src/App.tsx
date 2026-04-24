@@ -21,9 +21,37 @@ import UserProfile from './components/UserProfile';
 import ReportModal from './components/ReportModal';
 import MessagingSheet from './components/MessagingSheet';
 import NotificationEngine from './components/NotificationEngine';
+import { ShieldOff } from 'lucide-react';
 
 function AppContent() {
-  const { activeTab, isLoggedIn, isAdmin, currentUser, openAuthModal } = useApp();
+  const { activeTab, isLoggedIn, isAdmin, currentUser, openAuthModal, isDeactivated, reactivateAccount, logout } = useApp();
+
+  // Deactivated account gate
+  if (isLoggedIn && isDeactivated) {
+    return (
+      <div className="min-h-screen bg-gray-50 max-w-lg mx-auto flex flex-col items-center justify-center px-6">
+        <div className="w-20 h-20 rounded-3xl bg-red-100 flex items-center justify-center mb-6">
+          <ShieldOff className="w-10 h-10 text-red-500" />
+        </div>
+        <h1 className="text-2xl font-black text-gray-900 mb-2 text-center">Account Deactivated</h1>
+        <p className="text-sm text-gray-500 text-center mb-8 leading-relaxed">
+          Your account has been deactivated. Reactivate to continue posting prices and helping your community.
+        </p>
+        <button
+          onClick={reactivateAccount}
+          className="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-bold text-base mb-3 active:scale-[0.98] transition-transform"
+        >
+          Reactivate Account
+        </button>
+        <button
+          onClick={() => void logout()}
+          className="w-full py-3.5 rounded-2xl bg-gray-100 text-gray-600 font-semibold text-base active:scale-[0.98] transition-transform"
+        >
+          Log Out
+        </button>
+      </div>
+    );
+  }
 
   return (
     <StoresProvider isLoggedIn={isLoggedIn} isAdmin={isAdmin} currentUser={currentUser} onAuthRequired={openAuthModal}>

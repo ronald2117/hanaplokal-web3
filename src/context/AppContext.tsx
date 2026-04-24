@@ -31,6 +31,7 @@ interface AppState {
   activeTab: 'feed' | 'map' | 'search' | 'profile';
   mapFocusId: string | null;
   mapFocusMode: 'prices' | 'stores';
+  isDeactivated: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -62,6 +63,8 @@ interface AppContextType extends AppState {
   setActiveTab: (tab: AppState['activeTab']) => void;
   focusOnMap: (id: string, mode?: 'prices' | 'stores') => void;
   clearMapFocus: () => void;
+  deactivateAccount: () => void;
+  reactivateAccount: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -97,10 +100,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showReportModal: null,
     darkMode: getInitialDarkMode(),
     isAdmin: false,
+    isDeactivated: false,
     activeTab: 'feed',
     mapFocusId: null,
     mapFocusMode: 'prices',
   });
+
+  const deactivationKey = (uid: string) => `hanaplokal_deactivated_${uid}`;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -121,6 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const unsub = onAuthStateChanged(auth, user => {
       const email = user?.email?.toLowerCase() ?? '';
+      const deactivated = user ? localStorage.getItem(deactivationKey(user.uid)) === 'true' : false;
       setState(s => ({
         ...s,
         authLoading: false,
@@ -128,6 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentUser: user,
         isLoggedIn: Boolean(user),
         isAdmin: Boolean(email && adminEmails.includes(email)),
+        isDeactivated: deactivated,
         authError: user ? null : s.authError,
         showAuthModal: user ? false : s.showAuthModal,
       }));
@@ -293,6 +301,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, mapFocusId: null }));
   }, []);
 
+  const deactivateAccount = useCallback(() => {
+    const uid = state.currentUser?.uid;
+    if (uid) localStorage.setItem(deactivationKey(uid), 'true');
+    setState(s => ({ ...s, isDeactivated: true }));
+  }, [state.currentUser?.uid]);
+
+  const reactivateAccount = useCallback(() => {
+    const uid = state.currentUser?.uid;
+    if (uid) localStorage.removeItem(deactivationKey(uid));
+    setState(s => ({ ...s, isDeactivated: false }));
+  }, [state.currentUser?.uid]);
+
   return (
     <AppContext.Provider
       value={{
@@ -325,6 +345,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setActiveTab,
         focusOnMap,
         clearMapFocus,
+        deactivateAccount,
+        reactivateAccount,
       }}
     >
       {children}
