@@ -98,8 +98,14 @@ export default function ProfilePage() {
 
   const handleSaveSettings = () => {
     const r = parseFloat(settingsRadius);
-    if (!isNaN(r) && r >= 0.5 && r <= 100) {
-      setRadiusKm(r);
+    if (!isNaN(r)) {
+      if (r > 100) {
+        alert('Maximum search radius cannot exceed 100 km.');
+        return;
+      }
+      if (r >= 0.5) {
+        setRadiusKm(r);
+      }
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

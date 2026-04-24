@@ -53,9 +53,11 @@ export default function Feed() {
   const applyCustomRadius = () => {
     const parsed = Number.parseFloat(customRadius);
     if (!Number.isFinite(parsed)) return;
-
-    // Keep a practical range so an accidental large input does not overload the UI.
-    const normalized = Math.min(100, Math.max(0.5, parsed));
+    if (parsed > 100) {
+      alert('Maximum search radius cannot exceed 100 km.');
+      return;
+    }
+    const normalized = Math.max(0.5, parsed);
     setRadiusKm(Number(normalized.toFixed(1)));
     setShowRadiusMenu(false);
   };

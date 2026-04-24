@@ -82,7 +82,11 @@ export default function MapView() {
   const applyCustomRadius = () => {
     const parsed = Number.parseFloat(customRadius);
     if (!Number.isFinite(parsed)) return;
-    setRadiusKm(Number(Math.min(100, Math.max(0.5, parsed)).toFixed(1)));
+    if (parsed > 100) {
+      alert('Maximum search radius cannot exceed 100 km.');
+      return;
+    }
+    setRadiusKm(Number(Math.max(0.5, parsed).toFixed(1)));
   };
 
   // When focusOnMap() is called from another sheet, switch mode + select the pin

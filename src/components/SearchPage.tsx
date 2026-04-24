@@ -34,8 +34,11 @@ export default function SearchPage() {
   const applyCustomRadius = () => {
     const parsed = Number.parseFloat(customRadius);
     if (!Number.isFinite(parsed)) return;
-    const normalized = Math.min(100, Math.max(0.5, parsed));
-    setRadiusKm(Number(normalized.toFixed(1)));
+    if (parsed > 100) {
+      alert('Maximum search radius cannot exceed 100 km.');
+      return;
+    }
+    setRadiusKm(Number(Math.max(0.5, parsed).toFixed(1)));
     setShowRadiusMenu(false);
   };
 
