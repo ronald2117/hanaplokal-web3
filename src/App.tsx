@@ -13,6 +13,7 @@ import ProfilePage from './components/ProfilePage';
 import AuthModal from './components/AuthModal';
 import PriceHistorySheet from './components/PriceHistorySheet';
 import UploadModal from './components/UploadModal';
+import EditPostModal from './components/EditPostModal';
 import PriceAlertModal from './components/PriceAlertModal';
 import CommentSheet from './components/CommentSheet';
 import StoreProfile from './components/StoreProfile';
@@ -75,6 +76,7 @@ function AppContent() {
               <AuthModal />
               <PriceHistorySheet />
               <UploadModal />
+              <EditPostModal />
               <PriceAlertModal />
               <CommentSheet />
               <StoreProfile />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, ThumbsUp, MessageCircle, Share2, AlertTriangle, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag, Trash2 } from 'lucide-react';
+import { Clock, ThumbsUp, MessageCircle, Share2, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag, Trash2, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji, getCategoryEmoji } from '../data/mockData';
@@ -10,7 +10,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { openPriceHistory, openStoreProfile, openUserProfile, openReportModal, isAdmin, currentUser } = useApp();
+  const { openPriceHistory, openStoreProfile, openUserProfile, openReportModal, openEditPost, isAdmin, currentUser } = useApp();
   const { toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet, adminDeletePost, userDeletePost } = usePosts();
   const { getDistanceFromUser } = useLocation();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -254,31 +254,40 @@ export default function PostCard({ post }: PostCardProps) {
         </button>
 
         {/* Owner delete button — visible only to the post's author */}
-        {isOwner && !isAdmin && (
-          confirmUserDelete ? (
-            <div className="flex items-center gap-1 ml-1">
-              <button
-                onClick={handleUserDelete}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95"
-              >
-                Delete
-              </button>
-              <button
-                onClick={e => { e.stopPropagation(); setConfirmUserDelete(false); }}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 active:scale-95"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={e => { e.stopPropagation(); setConfirmUserDelete(true); }}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-50 transition-colors active:scale-95"
-              aria-label="Delete my post"
+        {isOwner && (
+          <div className="flex items-center gap-1 group">
+             <button
+              onClick={e => { e.stopPropagation(); openEditPost(post.id); }}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm text-gray-500 hover:bg-gray-100 transition-colors active:scale-95"
+              aria-label="Edit my post"
             >
-              <Trash2 className="w-4 h-4" />
+              <Pencil className="w-4 h-4" />
             </button>
-          )
+            {confirmUserDelete ? (
+              <div className="flex items-center gap-1 ml-1">
+                <button
+                  onClick={handleUserDelete}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-red-500 text-white active:scale-95"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setConfirmUserDelete(false); }}
+                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={e => { e.stopPropagation(); setConfirmUserDelete(true); }}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-50 transition-colors active:scale-95"
+                aria-label="Delete my post"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         )}
       </div>
 

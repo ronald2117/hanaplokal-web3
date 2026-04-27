@@ -20,6 +20,7 @@ interface AppState {
   authError: string | null;
   authBusy: boolean;
   showUploadModal: boolean;
+  showEditPost: string | null; // post id
   showPriceHistory: string | null; // post id
   showPriceAlert: boolean;
   showStoreProfile: string | null; // store id
@@ -46,6 +47,8 @@ interface AppContextType extends AppState {
   clearAuthError: () => void;
   openUploadModal: () => void;
   closeUploadModal: () => void;
+  openEditPost: (postId: string) => void;
+  closeEditPost: () => void;
   openPriceHistory: (postId: string) => void;
   closePriceHistory: () => void;
   openPriceAlert: () => void;
@@ -93,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     authError: null,
     authBusy: false,
     showUploadModal: false,
+    showEditPost: null,
     showPriceHistory: null,
     showPriceAlert: false,
     showStoreProfile: null,
@@ -274,6 +278,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const clearAuthError = useCallback(() => setState(s => ({ ...s, authError: null })), []);
   const openUploadModal = useCallback(() => setState(s => ({ ...s, showUploadModal: true })), []);
   const closeUploadModal = useCallback(() => setState(s => ({ ...s, showUploadModal: false })), []);
+  const openEditPost = useCallback((postId: string) => setState(s => ({ ...s, showEditPost: postId })), []);
+  const closeEditPost = useCallback(() => setState(s => ({ ...s, showEditPost: null })), []);
   const openPriceHistory = useCallback((postId: string) => setState(s => ({ ...s, showPriceHistory: postId })), []);
   const closePriceHistory = useCallback(() => setState(s => ({ ...s, showPriceHistory: null })), []);
   const openPriceAlert = useCallback(() => setState(s => ({ ...s, showPriceAlert: true })), []);
@@ -345,6 +351,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearAuthError,
         openUploadModal,
         closeUploadModal,
+        openEditPost,
+        closeEditPost,
         openPriceHistory,
         closePriceHistory,
         openPriceAlert,

@@ -28,6 +28,7 @@ import {
   Users,
   Flame,
   RotateCcw,
+  Pencil,
 } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { useApp } from '../context/AppContext';
@@ -51,6 +52,7 @@ export default function ProfilePage() {
     openStoreProfile,
     openPriceAlert,
     openMessages,
+    openEditPost,
     isAdmin,
     darkMode,
     toggleDarkMode,
@@ -465,6 +467,15 @@ export default function ProfilePage() {
                     </button>
 
                     <div className="flex-1" />
+
+                    {/* Edit button */}
+                    <button
+                      onClick={() => openEditPost(post.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
 
                     {/* Delete button */}
                     {confirmDeleteId === post.id ? (

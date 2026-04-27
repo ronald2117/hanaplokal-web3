@@ -20,6 +20,7 @@ import {
   restorePost as restorePostRemote,
   toggleVouch as toggleVouchRemote,
   permanentlyDeletePost,
+  updatePost as updatePostRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
 
@@ -47,6 +48,7 @@ interface PostsContextType {
     storeId?: string;
     locationCoords?: { lat: number; lng: number };
   }) => void;
+  updatePost: (postId: string, data: Partial<Post>) => void;
   deletePost: (postId: string) => void;
   userDeletePost: (post: import('../data/mockData').Post) => void;
   adminDeletePost: (post: import('../data/mockData').Post) => void;
@@ -319,6 +321,25 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     }
   }, [currentUser]);
 
+  const updatePost = useCallback((postId: string, data: Partial<Post>) => {
+    // Check permission
+    if (!isLoggedIn || !currentUser) return;
+    
+    // Update locally
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return { ...p, ...data, updatedAt: Date.now() };
+      }
+      return p;
+    }));
+
+    if (isFirebaseConfigured) {
+      updatePostRemote(postId, data).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to update post:', err);
+      });
+    }
+  }, [currentUser, isLoggedIn]);
+
   const deletePost = useCallback((postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
     setComments(prev => prev.filter(c => c.postId !== postId));
@@ -454,6 +475,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         addComment,
         deleteComment,
         addPost,
+        updatePost,
         deletePost,
         userDeletePost,
         adminDeletePost,

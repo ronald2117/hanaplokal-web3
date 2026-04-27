@@ -230,6 +230,11 @@ export async function createPost(post: Omit<Post, 'id'>): Promise<void> {
   }
 }
 
+export async function updatePost(postId: string, data: Partial<Post>): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  await updateDoc(doc(db, 'posts', postId), sanitize(data));
+}
+
 export async function createStore(store: Store): Promise<string> {
   if (!db) throw new Error('Firebase is not configured');
   await setDoc(doc(db, 'stores', store.id), {

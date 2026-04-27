@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag, Map, ExternalLink, MapPin, Trash2 } from 'lucide-react';
+import { X, TrendingDown, TrendingUp, Minus, BarChart3, Bell, ThumbsUp, MessageCircle, Share2, Store, User, Bookmark, Flag, Map, ExternalLink, MapPin, Trash2, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
 import SparklineChart from './SparklineChart';
@@ -18,6 +18,7 @@ export default function PriceHistorySheet() {
     openReportModal,
     focusOnMap,
     currentUser,
+    openEditPost,
   } = useApp();
   const { posts, toggleVouch, vouchedPosts, savedPostIds, toggleSavePost, openCommentSheet, userDeletePost } = usePosts();
   const { isWithinRadius, getDistanceFromUser } = useLocation();
@@ -231,6 +232,15 @@ export default function PriceHistorySheet() {
               <button onClick={handleReport} className="w-9 h-9 rounded-xl bg-white text-gray-500 hover:bg-gray-100 inline-flex items-center justify-center transition-colors" aria-label="Report">
                 <Flag className="w-4 h-4" />
               </button>
+              {isOwner && (
+                <button
+                  onClick={() => { closePriceHistory(); setTimeout(() => openEditPost(post.id), 220); }}
+                  className="w-9 h-9 rounded-xl bg-white text-gray-500 hover:bg-gray-100 inline-flex items-center justify-center transition-colors ml-1"
+                  aria-label="Edit my post"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
               {isOwner && (
                 confirmDelete ? (
                   <div className="flex items-center gap-1 ml-1">
