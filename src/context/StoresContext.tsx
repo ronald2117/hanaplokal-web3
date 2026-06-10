@@ -6,9 +6,12 @@ import {
   loadUserStoreVouches,
   subscribeToStores,
   subscribeToDeletedStores,
+  subscribeToPendingStores,
   softDeleteStore,
   restoreStore as restoreStoreRemote,
   toggleStoreVouch as toggleStoreVouchRemote,
+  approveStore as approveStoreRemote,
+  rejectStore as rejectStoreRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
 
@@ -21,6 +24,10 @@ interface StoresContextType {
   adminDeleteStore: (store: Store) => void;
   restoreStore: (store: Store) => void;
   deletedStores: Store[];
+  // Pending review
+  pendingStores: Store[];
+  approveStore: (store: Store) => void;
+  rejectStore: (storeId: string) => void;
 }
 
 const StoresContext = createContext<StoresContextType | null>(null);
@@ -41,15 +48,19 @@ function calculateTrustRating(store: Pick<Store, 'verified' | 'vouchCount'>): nu
 export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onAuthRequired }: StoresProviderProps) {
   const [stores, setStores] = useState<Store[]>(isFirebaseConfigured ? [] : mockStores);
   const [deletedStores, setDeletedStores] = useState<Store[]>([]);
+  const [pendingStores, setPendingStores] = useState<Store[]>([]);
   const [vouchedStores, setVouchedStores] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     const unsub = subscribeToStores(setStores);
     const unsubDeleted = isAdmin ? subscribeToDeletedStores(setDeletedStores) : null;
+    // Subscribe to pending stores (admins see all; regular users see none from Firestore)
+    const unsubPending = isAdmin ? subscribeToPendingStores(setPendingStores) : null;
     return () => {
       if (unsub) unsub();
       if (unsubDeleted) unsubDeleted();
+      if (unsubPending) unsubPending();
     };
   }, [isAdmin]);
 
@@ -71,19 +82,24 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
       rating: 0,
       vouchCount: 0,
       trustRating: 45,
+      status: 'pending',
+      submittedBy: currentUser?.uid ?? 'current_user',
+      submittedByName: currentUser?.displayName ?? 'You',
     };
-    setStores(prev => [newStore, ...prev]);
+
+    // Add to local pending list (not to the live store list)
+    setPendingStores(prev => [newStore, ...prev]);
 
     if (isFirebaseConfigured) {
       createStore(newStore).catch(err => {
         console.error('[HanapLokal] ❌ Failed to save store to Firestore:', err);
       });
     } else {
-      console.warn('[HanapLokal] ⚠️ Firebase not configured — store saved locally only.');
+      console.warn('[HanapLokal] ⚠️ Firebase not configured — store saved locally as pending.');
     }
 
     return newStore;
-  }, []);
+  }, [currentUser]);
 
   const toggleStoreVouch = useCallback((storeId: string): boolean => {
     if (!isLoggedIn) {
@@ -163,12 +179,49 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
     }
   }, []);
 
+  const approveStore = useCallback((store: Store) => {
+    // Optimistic: move from pending to live list
+    setPendingStores(prev => prev.filter(s => s.id !== store.id));
+    setStores(prev => [{ ...store, status: 'approved' }, ...prev]);
+
+    if (isFirebaseConfigured) {
+      approveStoreRemote(store).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to approve store:', err);
+        // Rollback
+        setPendingStores(prev => [store, ...prev]);
+        setStores(prev => prev.filter(s => s.id !== store.id));
+      });
+    }
+  }, []);
+
+  const rejectStore = useCallback((storeId: string) => {
+    setPendingStores(prev => prev.filter(s => s.id !== storeId));
+
+    if (isFirebaseConfigured) {
+      rejectStoreRemote(storeId).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to reject store:', err);
+      });
+    }
+  }, []);
+
   const getStore = useCallback((id: string): Store | undefined => {
     return stores.find(s => s.id === id);
   }, [stores]);
 
   return (
-    <StoresContext.Provider value={{ stores, addStore, getStore, vouchedStores, toggleStoreVouch, adminDeleteStore, restoreStore, deletedStores }}>
+    <StoresContext.Provider value={{
+      stores,
+      addStore,
+      getStore,
+      vouchedStores,
+      toggleStoreVouch,
+      adminDeleteStore,
+      restoreStore,
+      deletedStores,
+      pendingStores,
+      approveStore,
+      rejectStore,
+    }}>
       {children}
     </StoresContext.Provider>
   );

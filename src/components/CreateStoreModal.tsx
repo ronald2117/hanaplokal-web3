@@ -182,15 +182,22 @@ export default function CreateStoreModal() {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white rounded-3xl p-8 m-6 text-center animate-scale-in shadow-2xl max-w-sm w-full">
-          <div className="w-16 h-16 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-            <Check className="w-8 h-8 text-emerald-600" />
+          <div className="w-16 h-16 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Store Created!</h3>
+          <h3 className="text-xl font-bold text-gray-900">Submitted for Review</h3>
           <p className="text-gray-500 text-sm mt-2">
-            <span className="font-semibold text-gray-700">{storeName}</span> has been added to HanapLokal.
+            <span className="font-semibold text-gray-700">{storeName}</span> has been submitted and is awaiting admin approval.
           </p>
+          <div className="mt-3 px-4 py-2.5 bg-amber-50 rounded-xl border border-amber-100">
+            <p className="text-amber-700 text-xs font-medium">
+              ⏳ The store will be added to HanapLokal once an admin reviews and approves it.
+            </p>
+          </div>
           <p className="text-gray-400 text-xs mt-3">
-            You and others can now tag this store when posting prices.
+            Thank you for growing the HanapLokal community!
           </p>
         </div>
       </div>

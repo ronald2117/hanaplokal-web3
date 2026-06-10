@@ -38,9 +38,9 @@ import { useStores } from '../context/StoresContext';
 import { useReports } from '../context/ReportsContext';
 import { useMessages } from '../context/MessagesContext';
 import { useBan } from '../context/BanContext';
-import { getTimeAgo, getMediaEmoji, getStoreEmoji } from '../data/mockData';
+import { getTimeAgo, getMediaEmoji, getStoreEmoji, getStoreTypeLabel } from '../data/mockData';
 
-type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores' | 'adminBannedUsers';
+type SubView = 'main' | 'settings' | 'myPosts' | 'priceAlerts' | 'savedProducts' | 'myImpact' | 'adminReports' | 'adminDeletedPosts' | 'adminDeletedStores' | 'adminBannedUsers' | 'adminPendingPosts' | 'adminPendingStores';
 
 export default function ProfilePage() {
   const {
@@ -75,8 +75,12 @@ export default function ProfilePage() {
     toggleAlertActive,
     deleteAlert,
     userDeletePost,
+    pendingPosts,
+    myPendingPosts,
+    approvePost,
+    rejectPost,
   } = usePosts();
-  const { stores, deletedStores, restoreStore } = useStores();
+  const { stores, deletedStores, restoreStore, pendingStores, approveStore, rejectStore } = useStores();
   const { reports, updateReportStatus } = useReports();
   const { conversations } = useMessages();
   const { bannedUsers, unbanUser } = useBan();
@@ -340,17 +344,13 @@ export default function ProfilePage() {
             </div>
           ) : (
             myPosts.map(post => {
-              const isExpiring = Date.now() - post.timestamp > 12 * 60 * 60 * 1000;
-              const isExpired = Date.now() - post.timestamp > 24 * 60 * 60 * 1000;
               const isVouched = vouchedPosts.has(post.id);
               const emoji = getMediaEmoji(post.mediaUrl || post.category.toLowerCase());
 
               return (
                 <div
                   key={post.id}
-                  className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-opacity ${
-                    isExpired ? 'opacity-50' : ''
-                  }`}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                 >
                   {/* Post header */}
                   <div className="p-4 pb-0">
@@ -398,14 +398,9 @@ export default function ProfilePage() {
 
                       {/* Badges */}
                       <div className="flex flex-col items-end gap-1.5">
-                        {isExpiring && !isExpired && (
-                          <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Expiring
-                          </span>
-                        )}
-                        {isExpired && (
-                          <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Expired
+                        {myPendingPosts.some(p => p.id === post.id) && (
+                          <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            ⏳ Under Review
                           </span>
                         )}
                         <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize">
@@ -512,7 +507,56 @@ export default function ProfilePage() {
           )}
 
           <div className="h-4" />
+
+          {/* Pending posts section for the current user */}
+          {myPendingPosts.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 px-1 pb-1">
+                <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">⏳ Pending Review ({myPendingPosts.length})</span>
+              </div>
+              {myPendingPosts.map(post => {
+                const emoji = getMediaEmoji(post.mediaUrl || post.category.toLowerCase());
+                return (
+                  <div
+                    key={post.id}
+                    className="bg-white rounded-2xl shadow-sm border-2 border-amber-200 overflow-hidden opacity-80"
+                  >
+                    <div className="p-4 pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center text-2xl flex-shrink-0">
+                          {emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 text-sm truncate">{post.productName}</h3>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-orange-500 font-black text-lg">₱{post.price}</span>
+                            <span className="text-gray-400 text-xs">/{post.unit}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1 text-xs text-gray-400">
+                              <Clock className="w-3 h-3" />
+                              <span>{getTimeAgo(post.timestamp)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+                          ⏳ Under Review
+                        </span>
+                      </div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-2">
+                        This post is waiting for admin approval before going live.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="h-2" />
+            </>
+          )}
         </div>
+
       </div>
     );
   }
@@ -1182,9 +1226,168 @@ export default function ProfilePage() {
       </div>
     );
   }
+  if (subView === 'adminPendingPosts') {
+    return (
+      <div className="pb-24 min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-amber-500 to-orange-500 pt-14 pb-5 px-4 rounded-b-3xl">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSubView('adminReports')}
+                className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h2 className="text-white text-xl font-bold flex-1">Pending Posts</h2>
+              <div className="bg-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-white text-sm font-bold">{pendingPosts.length}</span>
+                <span className="text-amber-100 text-xs ml-1">pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-3">
+          {pendingPosts.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="text-5xl mb-3">✅</div>
+              <h3 className="font-bold text-gray-900 mb-1">All clear!</h3>
+              <p className="text-sm text-gray-500">No posts are pending review right now.</p>
+            </div>
+          ) : (
+            pendingPosts.map(post => {
+              const emoji = getMediaEmoji(post.mediaUrl || post.category.toLowerCase());
+              return (
+                <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-xl flex-shrink-0">
+                        {emoji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{post.productName}</p>
+                        <p className="text-orange-500 font-black text-base">₱{post.price}<span className="text-xs text-gray-400 font-medium">/{post.unit}</span></p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-xs text-gray-500 truncate">{post.storeName}</span>
+                          <span className="text-[10px] text-gray-400">• by {post.userName}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-600 capitalize">{post.category}</span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-400">
+                          <Clock className="w-3 h-3" />
+                          <span>Submitted {getTimeAgo(post.timestamp)}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 flex-shrink-0">
+                        Pending
+                      </span>
+                    </div>
+                  </div>
+                  <div className="px-4 pb-3 flex gap-2">
+                    <button
+                      onClick={() => approvePost(post)}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => rejectPost(post.id)}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-red-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div className="h-4" />
+        </div>
+      </div>
+    );
+  }
+
+  if (subView === 'adminPendingStores') {
+    return (
+      <div className="pb-24 min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-amber-500 to-orange-500 pt-14 pb-5 px-4 rounded-b-3xl">
+          <div className="max-w-lg mx-auto">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSubView('adminReports')}
+                className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h2 className="text-white text-xl font-bold flex-1">Pending Stores</h2>
+              <div className="bg-white/20 rounded-xl px-3 py-1.5">
+                <span className="text-white text-sm font-bold">{pendingStores.length}</span>
+                <span className="text-amber-100 text-xs ml-1">pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 pt-5 space-y-3">
+          {pendingStores.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="text-5xl mb-3">✅</div>
+              <h3 className="font-bold text-gray-900 mb-1">All clear!</h3>
+              <p className="text-sm text-gray-500">No stores are pending review right now.</p>
+            </div>
+          ) : (
+            pendingStores.map(store => (
+              <div key={store.id} className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-xl flex-shrink-0">
+                      {getStoreEmoji(store.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{store.name}</p>
+                      <p className="text-xs text-orange-600 font-semibold">{getStoreTypeLabel(store.type)}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">📍 {store.address}</p>
+                      {store.submittedByName && (
+                        <p className="text-[11px] text-gray-400 mt-1">Submitted by {store.submittedByName}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {store.categories.map(cat => (
+                          <span key={cat} className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-600">{cat}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 flex-shrink-0">
+                      Pending
+                    </span>
+                  </div>
+                </div>
+                <div className="px-4 pb-3 flex gap-2">
+                  <button
+                    onClick={() => approveStore(store)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => rejectStore(store.id)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-red-500 text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+          <div className="h-4" />
+        </div>
+      </div>
+    );
+  }
 
 
-  // Settings sub-view
   if (subView === 'settings') {
     return (
       <div className="pb-24 min-h-screen bg-gray-50">
@@ -1609,6 +1812,32 @@ export default function ProfilePage() {
 
         {isAdmin && (
           <div className="space-y-2">
+            <button
+              onClick={() => setSubView('adminPendingPosts')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-amber-200 hover:bg-amber-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <Package className="w-4.5 h-4.5 text-amber-600" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Pending Posts</span>
+              {pendingPosts.length > 0 && (
+                <span className="text-xs text-white font-bold bg-amber-500 px-2 py-0.5 rounded-full">{pendingPosts.length}</span>
+              )}
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
+            <button
+              onClick={() => setSubView('adminPendingStores')}
+              className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-amber-200 hover:bg-amber-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <Store className="w-4.5 h-4.5 text-amber-600" />
+              </div>
+              <span className="flex-1 font-medium text-gray-900 text-sm">Pending Stores</span>
+              {pendingStores.length > 0 && (
+                <span className="text-xs text-white font-bold bg-amber-500 px-2 py-0.5 rounded-full">{pendingStores.length}</span>
+              )}
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </button>
             <button
               onClick={() => setSubView('adminReports')}
               className="w-full flex items-center gap-3 px-4 py-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors text-left"

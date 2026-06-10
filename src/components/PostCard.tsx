@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Clock, ThumbsUp, MessageCircle, Share2, TrendingDown, TrendingUp, Minus, MapPin, Store, Bookmark, Flag, Trash2, Pencil } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { usePosts } from '../context/PostsContext';
-import { type Post, getTimeAgo, getPostAge, getMediaGradient, getMediaEmoji, getCategoryEmoji } from '../data/mockData';
+import { type Post, getTimeAgo, getMediaGradient, getMediaEmoji, getCategoryEmoji } from '../data/mockData';
 import { useLocation } from '../context/LocationContext';
 
 interface PostCardProps {
@@ -16,7 +16,7 @@ export default function PostCard({ post }: PostCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmUserDelete, setConfirmUserDelete] = useState(false);
   const isOwner = Boolean(currentUser && currentUser.uid === post.userId);
-  const age = getPostAge(post.timestamp);
+
   const isVouched = vouchedPosts.has(post.id);
   const isSaved = savedPostIds.has(post.id);
   // When no store was selected, storeName is 'Current Location' — show the
@@ -95,8 +95,7 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-3 active:scale-[0.99] transition-all duration-200 cursor-pointer ${age === 'expired' ? 'opacity-50' : ''
-        }`}
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-3 active:scale-[0.99] transition-all duration-200 cursor-pointer"
       onClick={() => openPriceHistory(post.id)}
     >
       {/* User header */}

@@ -3,6 +3,7 @@ import {
   arrayUnion,
   and,
   collection,
+  deleteDoc,
   doc,
   getDocs,
   increment,
@@ -221,13 +222,12 @@ export function subscribeToPostComments(
 
 export async function createPost(post: Omit<Post, 'id'>): Promise<void> {
   if (!db) throw new Error('Firebase is not configured');
-  await addDoc(collection(db, 'posts'), {
+  // New posts go into pendingPosts, not posts, until admin approves
+  await addDoc(collection(db, 'pendingPosts'), {
     ...sanitize(post),
+    status: 'pending',
     timestamp: serverTimestamp(),
   });
-  if (post.storeId) {
-    await updateDoc(doc(db, 'stores', post.storeId), { totalPosts: increment(1) });
-  }
 }
 
 export async function updatePost(postId: string, data: Partial<Post>): Promise<void> {
@@ -237,11 +237,73 @@ export async function updatePost(postId: string, data: Partial<Post>): Promise<v
 
 export async function createStore(store: Store): Promise<string> {
   if (!db) throw new Error('Firebase is not configured');
-  await setDoc(doc(db, 'stores', store.id), {
+  // New stores go into pendingStores, not stores, until admin approves
+  await setDoc(doc(db, 'pendingStores', store.id), {
     ...sanitize(store),
+    status: 'pending',
     createdAt: serverTimestamp(),
   });
   return store.id;
+}
+
+export function subscribeToPendingPosts(onData: (posts: Post[]) => void): Unsubscribe | null {
+  if (!db) return null;
+  const q = query(collection(db, 'pendingPosts'), orderBy('timestamp', 'desc'), limit(200));
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toPost(item.id, item.data())));
+    },
+    err => {
+      console.warn('[HanapLokal] ❌ subscribeToPendingPosts failed:', err.message);
+    }
+  );
+}
+
+export function subscribeToPendingStores(onData: (stores: Store[]) => void): Unsubscribe | null {
+  if (!db) return null;
+  const q = query(collection(db, 'pendingStores'), orderBy('name', 'asc'));
+  return onSnapshot(
+    q,
+    snapshot => {
+      onData(snapshot.docs.map(item => toStore(item.id, item.data())));
+    },
+    err => {
+      console.warn('[HanapLokal] ❌ subscribeToPendingStores failed:', err.message);
+    }
+  );
+}
+
+export async function approvePost(post: Post): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+  const { status: _s, ...postData } = sanitize(post);
+  batch.set(doc(db, 'posts', post.id), { ...postData, status: 'approved' });
+  batch.delete(doc(db, 'pendingPosts', post.id));
+  await batch.commit();
+  // Increment store totalPosts if applicable
+  if (post.storeId) {
+    await updateDoc(doc(db, 'stores', post.storeId), { totalPosts: increment(1) });
+  }
+}
+
+export async function rejectPost(postId: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  await deleteDoc(doc(db, 'pendingPosts', postId));
+}
+
+export async function approveStore(store: Store): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  const batch = writeBatch(db);
+  const { status: _s, ...storeData } = sanitize(store);
+  batch.set(doc(db, 'stores', store.id), { ...storeData, status: 'approved' });
+  batch.delete(doc(db, 'pendingStores', store.id));
+  await batch.commit();
+}
+
+export async function rejectStore(storeId: string): Promise<void> {
+  if (!db) throw new Error('Firebase is not configured');
+  await deleteDoc(doc(db, 'pendingStores', storeId));
 }
 
 export function subscribeToDeletedStores(onData: (stores: import('../data/mockData').Store[]) => void): Unsubscribe | null {

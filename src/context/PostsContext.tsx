@@ -16,11 +16,14 @@ import {
   subscribeToComments,
   subscribeToPosts,
   subscribeToDeletedPosts,
+  subscribeToPendingPosts,
   softDeletePost,
   restorePost as restorePostRemote,
   toggleVouch as toggleVouchRemote,
   permanentlyDeletePost,
   updatePost as updatePostRemote,
+  approvePost as approvePostRemote,
+  rejectPost as rejectPostRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
 
@@ -43,6 +46,7 @@ interface PostsContextType {
     price: number;
     unit: string;
     mediaUrl: string;
+    mediaType?: 'photo' | 'video' | null;
     location?: string;
     storeName?: string;
     storeId?: string;
@@ -59,6 +63,11 @@ interface PostsContextType {
   toggleAlertActive: (alertId: string) => void;
   deleteAlert: (alertId: string) => void;
   getCommentsForPost: (postId: string) => Comment[];
+  // Pending review
+  pendingPosts: Post[];
+  myPendingPosts: Post[];
+  approvePost: (post: Post) => void;
+  rejectPost: (postId: string) => void;
 }
 
 const PostsContext = createContext<PostsContextType | null>(null);
@@ -75,6 +84,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
   const [posts, setPosts] = useState<Post[]>(isFirebaseConfigured ? [] : mockPosts);
   const [comments, setComments] = useState<Comment[]>(isFirebaseConfigured ? [] : mockComments);
   const [deletedPosts, setDeletedPosts] = useState<Post[]>([]);
+  const [pendingPosts, setPendingPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(isFirebaseConfigured);
   const [vouchedPosts, setVouchedPosts] = useState<Set<string>>(new Set());
   const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
@@ -130,11 +140,14 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     });
     const unsubComments = subscribeToComments(setComments);
     const unsubDeleted = isAdmin ? subscribeToDeletedPosts(setDeletedPosts) : null;
+    // Admin subscribes to all pending posts; regular users get all pending too so they can see their own
+    const unsubPending = subscribeToPendingPosts(setPendingPosts);
 
     return () => {
       if (unsubPosts) unsubPosts();
       if (unsubComments) unsubComments();
       if (unsubDeleted) unsubDeleted();
+      if (unsubPending) unsubPending();
     };
   }, [isAdmin]);
 
@@ -277,6 +290,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     price: number;
     unit: string;
     mediaUrl: string;
+    mediaType?: 'photo' | 'video' | null;
     location?: string;
     storeName?: string;
     storeId?: string;
@@ -297,19 +311,22 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       commentCount: 0,
       marketInsight: 'New report',
       insightType: 'average',
+      status: 'pending',
       // Explicit field assignment — no spread overwriting fallbacks with undefined
       productName: postData.productName,
       category: postData.category,
       price: postData.price,
       unit: postData.unit,
       mediaUrl: postData.mediaUrl.startsWith('http') ? postData.mediaUrl : (gradient !== 'from-gray-100 via-gray-50 to-gray-100' ? mediaKey : postData.category.toLowerCase()),
+      mediaType: postData.mediaType ?? null,
       location: postData.location ?? 'Tanauan, Batangas',
       storeName: postData.storeName ?? 'Current Location',
       storeId: postData.storeId ?? '',
       locationCoords: postData.locationCoords ?? { lat: 14.0863 + (Math.random() - 0.5) * 0.01, lng: 121.1486 + (Math.random() - 0.5) * 0.01 },
     };
 
-    setPosts(prev => [newPost, ...prev]);
+    // Add to local pending list (not to the main feed)
+    setPendingPosts(prev => [newPost, ...prev]);
 
     if (isFirebaseConfigured) {
       const { id: _id, ...payload } = newPost;
@@ -317,7 +334,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         console.error('[HanapLokal] ❌ Failed to save post to Firestore:', err);
       });
     } else {
-      console.warn('[HanapLokal] ⚠️ Firebase not configured — post saved locally only.');
+      console.warn('[HanapLokal] ⚠️ Firebase not configured — post saved locally as pending.');
     }
   }, [currentUser]);
 
@@ -404,6 +421,31 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     }
   }, []);
 
+  const approvePost = useCallback((post: Post) => {
+    // Optimistic: move from pending to live feed
+    setPendingPosts(prev => prev.filter(p => p.id !== post.id));
+    setPosts(prev => [{ ...post, status: 'approved' }, ...prev]);
+
+    if (isFirebaseConfigured) {
+      approvePostRemote(post).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to approve post:', err);
+        // Rollback
+        setPendingPosts(prev => [post, ...prev]);
+        setPosts(prev => prev.filter(p => p.id !== post.id));
+      });
+    }
+  }, []);
+
+  const rejectPost = useCallback((postId: string) => {
+    setPendingPosts(prev => prev.filter(p => p.id !== postId));
+
+    if (isFirebaseConfigured) {
+      rejectPostRemote(postId).catch(err => {
+        console.error('[HanapLokal] ❌ Failed to reject post:', err);
+      });
+    }
+  }, []);
+
   const toggleSavePost = useCallback((postId: string): boolean => {
     if (!isLoggedIn) {
       onAuthRequired();
@@ -459,6 +501,11 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [comments]);
 
+  // My pending posts = pending posts that belong to the current user
+  const myPendingPosts = pendingPosts.filter(
+    p => p.userId === (currentUser?.uid ?? 'current_user')
+  );
+
   return (
     <PostsContext.Provider
       value={{
@@ -486,6 +533,10 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         toggleAlertActive,
         deleteAlert,
         getCommentsForPost,
+        pendingPosts,
+        myPendingPosts,
+        approvePost,
+        rejectPost,
       }}
     >
       {children}

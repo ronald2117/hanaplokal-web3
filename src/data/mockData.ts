@@ -13,6 +13,9 @@ export interface Store {
   verified: boolean;
   vouchCount: number;
   trustRating: number;
+  status?: 'pending' | 'approved' | 'rejected';
+  submittedBy?: string;
+  submittedByName?: string;
 }
 
 export interface Post {
@@ -37,6 +40,7 @@ export interface Post {
   commentCount: number;
   marketInsight: string;
   insightType: 'below' | 'lowest' | 'above' | 'average';
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface MarketInsight {
