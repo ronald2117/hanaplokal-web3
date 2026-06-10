@@ -80,6 +80,19 @@ export interface PriceAlert {
   active: boolean;
 }
 
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: 'post_approved' | 'post_rejected' | 'post_vouched' | 'new_comment' |
+        'new_message' | 'price_alert' | 'new_post_nearby' | 'admin_pending_post' | 'admin_pending_store';
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: number;
+  linkEntityId?: string;
+  linkEntityType?: 'post' | 'store' | 'message';
+}
+
 const now = Date.now();
 
 export const mockStores: Store[] = [

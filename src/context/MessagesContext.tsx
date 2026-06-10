@@ -8,6 +8,7 @@ import {
   type ChatMessage,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
+import { useNotifications } from './NotificationsContext';
 
 interface ConversationSummary {
   userId: string;
@@ -37,6 +38,7 @@ interface MessagesProviderProps {
 export function MessagesProvider({ children, isLoggedIn, currentUser, onAuthRequired }: MessagesProviderProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const activeUserId = currentUser?.uid ?? (isLoggedIn ? 'current_user' : null);
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -99,8 +101,18 @@ export function MessagesProvider({ children, isLoggedIn, currentUser, onAuthRequ
       });
     }
 
+    // Trigger notification
+    const senderName = currentUser?.displayName ?? 'Someone';
+    void addNotification(toUserId, {
+      type: 'new_message',
+      title: 'New Message',
+      body: `✉️ New message from ${senderName}: "${trimmed.length > 30 ? trimmed.substring(0, 30) + '...' : trimmed}"`,
+      linkEntityId: activeUserId,
+      linkEntityType: 'message',
+    });
+
     return true;
-  }, [activeUserId, isLoggedIn, onAuthRequired]);
+  }, [activeUserId, isLoggedIn, onAuthRequired, addNotification, currentUser]);
 
   const getMessagesWithUser = useCallback((userId: string): ChatMessage[] => {
     if (!activeUserId || !userId) return [];

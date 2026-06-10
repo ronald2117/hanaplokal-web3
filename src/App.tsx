@@ -5,6 +5,7 @@ import { StoresProvider } from './context/StoresContext';
 import { ReportsProvider } from './context/ReportsContext';
 import { MessagesProvider } from './context/MessagesContext';
 import { BanProvider } from './context/BanContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 import BottomNav from './components/BottomNav';
 import Feed from './components/Feed';
 import MapView from './components/MapView';
@@ -22,6 +23,7 @@ import UserProfile from './components/UserProfile';
 import ReportModal from './components/ReportModal';
 import MessagingSheet from './components/MessagingSheet';
 import NotificationEngine from './components/NotificationEngine';
+import NotificationsPanel from './components/NotificationsPanel';
 import { ShieldOff } from 'lucide-react';
 
 function AppContent() {
@@ -84,6 +86,7 @@ function AppContent() {
               <CreateStoreModal />
               <ReportModal />
               <MessagingSheet />
+              <NotificationsPanel />
             </div>
           </MessagesProvider>
         </ReportsProvider>
@@ -97,7 +100,9 @@ export default function App() {
     <AppProvider>
       <LocationProvider>
         <BanProvider>
-          <AppContent />
+          <NotificationsProvider>
+            <AppContent />
+          </NotificationsProvider>
         </BanProvider>
       </LocationProvider>
     </AppProvider>

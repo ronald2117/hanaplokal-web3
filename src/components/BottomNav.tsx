@@ -1,12 +1,20 @@
-import { Home, Map, Search, User, Plus } from 'lucide-react';
+import { Home, Map, Search, User, Plus, Bell } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useNotifications } from '../context/NotificationsContext';
 
 export default function BottomNav() {
   const { activeTab, setActiveTab, requireAuth, openUploadModal } = useApp();
+  const { unreadCount, setIsPanelOpen } = useNotifications();
 
   const handleUpload = () => {
     if (requireAuth()) {
       openUploadModal();
+    }
+  };
+
+  const handleNotifications = () => {
+    if (requireAuth()) {
+      setIsPanelOpen(true);
     }
   };
 
@@ -15,6 +23,7 @@ export default function BottomNav() {
     { id: 'map' as const, icon: Map, label: 'Map' },
     { id: 'upload' as const, icon: Plus, label: 'Post' },
     { id: 'search' as const, icon: Search, label: 'Search' },
+    { id: 'notifications' as const, icon: Bell, label: 'Alerts' },
     { id: 'profile' as const, icon: User, label: 'Profile' },
   ];
 
@@ -23,7 +32,8 @@ export default function BottomNav() {
       <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-1">
         {tabs.map((tab) => {
           const isUpload = tab.id === 'upload';
-          const isActive = !isUpload && activeTab === tab.id;
+          const isNotifications = tab.id === 'notifications';
+          const isActive = !isUpload && !isNotifications && activeTab === tab.id;
 
           if (isUpload) {
             return (
@@ -39,11 +49,31 @@ export default function BottomNav() {
             );
           }
 
+          if (isNotifications) {
+            return (
+              <button
+                key={tab.id}
+                onClick={handleNotifications}
+                className="flex flex-col items-center justify-center py-2 px-1 min-w-[50px] transition-colors text-gray-400 relative active:scale-95"
+              >
+                <Bell className="w-6 h-6" />
+                <span className="text-[10px] mt-0.5 font-medium">
+                  Alerts
+                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-2 bg-orange-500 text-white text-[9px] font-black min-w-[16px] h-4 rounded-full flex items-center justify-center border border-white px-1">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            );
+          }
+
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${
+              className={`flex flex-col items-center justify-center py-2 px-1 min-w-[50px] transition-colors ${
                 isActive ? 'text-orange-500' : 'text-gray-400'
               }`}
             >

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { type Store, mockStores } from '../data/mockData';
 import {
@@ -14,6 +14,7 @@ import {
   rejectStore as rejectStoreRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
+import { useNotifications } from './NotificationsContext';
 
 interface StoresContextType {
   stores: Store[];
@@ -50,6 +51,7 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
   const [deletedStores, setDeletedStores] = useState<Store[]>([]);
   const [pendingStores, setPendingStores] = useState<Store[]>([]);
   const [vouchedStores, setVouchedStores] = useState<Set<string>>(new Set());
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
@@ -98,8 +100,18 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
       console.warn('[HanapLokal] ⚠️ Firebase not configured — store saved locally as pending.');
     }
 
+    // Trigger notification to admin
+    const submitterName = currentUser?.displayName ?? 'Someone';
+    void addNotification('admin', {
+      type: 'admin_pending_store',
+      title: 'New Pending Store',
+      body: `🏪 ${submitterName} submitted a new store: "${newStore.name}"`,
+      linkEntityId: newStore.id,
+      linkEntityType: 'store',
+    });
+
     return newStore;
-  }, [currentUser]);
+  }, [currentUser, addNotification]);
 
   const toggleStoreVouch = useCallback((storeId: string): boolean => {
     if (!isLoggedIn) {
@@ -192,9 +204,20 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
         setStores(prev => prev.filter(s => s.id !== store.id));
       });
     }
-  }, []);
+
+    if (store.submittedBy) {
+      void addNotification(store.submittedBy, {
+        type: 'post_approved',
+        title: 'Store Approved',
+        body: `🏪 Your store "${store.name}" has been approved by an admin!`,
+        linkEntityId: store.id,
+        linkEntityType: 'store',
+      });
+    }
+  }, [addNotification]);
 
   const rejectStore = useCallback((storeId: string) => {
+    const store = pendingStores.find(s => s.id === storeId);
     setPendingStores(prev => prev.filter(s => s.id !== storeId));
 
     if (isFirebaseConfigured) {
@@ -202,7 +225,17 @@ export function StoresProvider({ children, isLoggedIn, isAdmin, currentUser, onA
         console.error('[HanapLokal] ❌ Failed to reject store:', err);
       });
     }
-  }, []);
+
+    if (store && store.submittedBy) {
+      void addNotification(store.submittedBy, {
+        type: 'post_rejected',
+        title: 'Store Rejected',
+        body: `❌ Your store "${store.name}" was not approved by an admin.`,
+        linkEntityId: store.id,
+        linkEntityType: 'store',
+      });
+    }
+  }, [pendingStores, addNotification]);
 
   const getStore = useCallback((id: string): Store | undefined => {
     return stores.find(s => s.id === id);

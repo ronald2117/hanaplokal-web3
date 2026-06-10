@@ -26,6 +26,7 @@ import {
   rejectPost as rejectPostRemote,
 } from '../services/firestore';
 import { isFirebaseConfigured } from '../lib/firebase';
+import { useNotifications } from './NotificationsContext';
 
 interface PostsContextType {
   posts: Post[];
@@ -90,6 +91,7 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
   const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [commentSheetPostId, setCommentSheetPostId] = useState<string | null>(null);
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     const storageKey = `hanaplokal_alerts_${currentUser?.uid ?? 'guest'}`;
@@ -210,8 +212,23 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       });
     }
 
+    // Trigger notification on vouch
+    if (!alreadyVouched) {
+      const post = posts.find(p => p.id === postId);
+      if (post && post.userId !== currentUser?.uid) {
+        const vouncerName = currentUser?.displayName ?? 'Someone';
+        void addNotification(post.userId, {
+          type: 'post_vouched',
+          title: 'Post Vouched',
+          body: `👍 ${vouncerName} vouched for your ${post.productName} post!`,
+          linkEntityId: postId,
+          linkEntityType: 'post',
+        });
+      }
+    }
+
     return true;
-  }, [currentUser, isLoggedIn, onAuthRequired, vouchedPosts]);
+  }, [currentUser, isLoggedIn, onAuthRequired, vouchedPosts, posts, addNotification]);
 
   const addComment = useCallback((postId: string, text: string, parentId?: string): boolean => {
     if (!isLoggedIn) {
@@ -257,8 +274,21 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
       console.warn('[HanapLokal] ⚠️ Firebase not configured — comment saved locally only.');
     }
 
+    // Trigger notification on comment
+    const post = posts.find(p => p.id === postId);
+    if (post && post.userId !== currentUser?.uid) {
+      const commenterName = currentUser?.displayName ?? 'Someone';
+      void addNotification(post.userId, {
+        type: 'new_comment',
+        title: 'New Comment',
+        body: `💬 ${commenterName} commented on your ${post.productName} post: "${trimmed.length > 30 ? trimmed.substring(0, 30) + '...' : trimmed}"`,
+        linkEntityId: postId,
+        linkEntityType: 'post',
+      });
+    }
+
     return true;
-  }, [currentUser, isLoggedIn, onAuthRequired]);
+  }, [currentUser, isLoggedIn, onAuthRequired, posts, addNotification]);
 
   const deleteComment = useCallback((commentId: string, postId: string): void => {
     // Optimistic: remove locally and decrement count
@@ -336,7 +366,17 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
     } else {
       console.warn('[HanapLokal] ⚠️ Firebase not configured — post saved locally as pending.');
     }
-  }, [currentUser]);
+
+    // Trigger notification to admin
+    const submitterName = currentUser?.displayName ?? 'Someone';
+    void addNotification('admin', {
+      type: 'admin_pending_post',
+      title: 'New Pending Post',
+      body: `🕐 ${submitterName} submitted a new price post: "${newPost.productName}"`,
+      linkEntityId: newPost.id,
+      linkEntityType: 'post',
+    });
+  }, [currentUser, addNotification]);
 
   const updatePost = useCallback((postId: string, data: Partial<Post>) => {
     // Check permission
@@ -434,9 +474,20 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         setPosts(prev => prev.filter(p => p.id !== post.id));
       });
     }
-  }, []);
+
+    if (post.userId) {
+      void addNotification(post.userId, {
+        type: 'post_approved',
+        title: 'Post Approved',
+        body: `✅ Your post for "${post.productName}" has been approved by an admin!`,
+        linkEntityId: post.id,
+        linkEntityType: 'post',
+      });
+    }
+  }, [addNotification]);
 
   const rejectPost = useCallback((postId: string) => {
+    const post = pendingPosts.find(p => p.id === postId);
     setPendingPosts(prev => prev.filter(p => p.id !== postId));
 
     if (isFirebaseConfigured) {
@@ -444,7 +495,17 @@ export function PostsProvider({ children, isLoggedIn, isAdmin, currentUser, onAu
         console.error('[HanapLokal] ❌ Failed to reject post:', err);
       });
     }
-  }, []);
+
+    if (post && post.userId) {
+      void addNotification(post.userId, {
+        type: 'post_rejected',
+        title: 'Post Rejected',
+        body: `❌ Your post for "${post.productName}" was not approved by an admin.`,
+        linkEntityId: post.id,
+        linkEntityType: 'post',
+      });
+    }
+  }, [pendingPosts, addNotification]);
 
   const toggleSavePost = useCallback((postId: string): boolean => {
     if (!isLoggedIn) {
